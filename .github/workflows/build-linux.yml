@@ -90,14 +90,15 @@ jobs:
       - name: Check the backend for the Linux architectures
         run: make go-deps go-os-check
 
-      - name: Print the module file diff
+      - name: Check the module files
         run: |
           #!/bin/sh
 
           set -e -f -u
 
+          # Fail if go.mod or go.sum are not tidy.
           go mod tidy
-          git --no-pager diff go.mod go.sum
+          git --no-pager diff --exit-code go.mod go.sum
 
       - name: Test the backend
         run: go test ./...
