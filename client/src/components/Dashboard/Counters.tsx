@@ -64,9 +64,6 @@ const Counters = ({ refreshButton, subtitle }: CountersProps) => {
         interval,
         numDnsQueries,
         numBlockedFiltering,
-        numReplacedSafebrowsing,
-        numReplacedParental,
-        numReplacedSafesearch,
         avgProcessingTime,
         timeUnits,
     } = useSelector<RootState, RootState['stats']>((state) => state.stats, shallowEqual);
@@ -95,24 +92,6 @@ const Counters = ({ refreshButton, subtitle }: CountersProps) => {
                     link
                 </a>,
             ],
-        },
-        {
-            label: 'stats_malware_phishing',
-            count: formatNumber(numReplacedSafebrowsing),
-            tooltipTitle: 'number_of_dns_query_blocked_24_hours_by_sec',
-            response_status: RESPONSE_FILTER.BLOCKED_THREATS.QUERY,
-        },
-        {
-            label: 'stats_adult',
-            count: formatNumber(numReplacedParental),
-            tooltipTitle: 'number_of_dns_query_blocked_24_hours_adult',
-            response_status: RESPONSE_FILTER.BLOCKED_ADULT_WEBSITES.QUERY,
-        },
-        {
-            label: 'enforced_save_search',
-            count: formatNumber(numReplacedSafesearch),
-            tooltipTitle: 'number_of_dns_query_to_safe_search',
-            response_status: RESPONSE_FILTER.SAFE_SEARCH.QUERY,
         },
         {
             label: 'average_processing_time',

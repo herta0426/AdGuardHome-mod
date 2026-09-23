@@ -13,21 +13,12 @@ import { QUERY_LOG_REASON_FILTER } from 'panel/helpers/constants';
 type Props = {
     numDnsQueries: number;
     numBlockedFiltering: number;
-    numReplacedSafebrowsing: number;
-    numReplacedParental: number;
-    numReplacedSafesearch: number;
     avgProcessingTime: number;
 };
 
 export const GeneralStatistics = (props: Props) => {
     const blockedPercent = () =>
         props.numDnsQueries > 0 ? (props.numBlockedFiltering / props.numDnsQueries) * 100 : 0;
-    const safebrowsingPercent = () =>
-        props.numDnsQueries > 0 ? (props.numReplacedSafebrowsing / props.numDnsQueries) * 100 : 0;
-    const parentalPercent = () =>
-        props.numDnsQueries > 0 ? (props.numReplacedParental / props.numDnsQueries) * 100 : 0;
-    const safesearchPercent = () =>
-        props.numDnsQueries > 0 ? (props.numReplacedSafesearch / props.numDnsQueries) * 100 : 0;
 
     const hasStats = () => props.numDnsQueries > 0;
 
@@ -60,41 +51,6 @@ export const GeneralStatistics = (props: Props) => {
                         tooltip={intl.getMessage('ads_blocked_tooltip')}
                         linkTo={RoutePath.QueryLog}
                         query={{ reason: QUERY_LOG_REASON_FILTER.BLOCKED_BY_FILTER.QUERY }}
-                    />
-
-                    <StatRow
-                        label={intl.getMessage('threats_blocked')}
-                        value={props.numReplacedSafebrowsing}
-                        percent={safebrowsingPercent()}
-                        icon="tracking"
-                        rowTheme="threatsBlocked"
-                        tooltip={intl.getMessage('threats_blocked_tooltip')}
-                        linkTo={RoutePath.QueryLog}
-                        query={{ reason: QUERY_LOG_REASON_FILTER.BLOCKED_BY_THREATS.QUERY }}
-                    />
-
-                    <StatRow
-                        label={intl.getMessage('adult_websites_blocked')}
-                        value={props.numReplacedParental}
-                        percent={parentalPercent()}
-                        icon="parental"
-                        rowTheme="adultWebsitesBlocked"
-                        tooltip={intl.getMessage('adult_websites_blocked_tooltip')}
-                        linkTo={RoutePath.QueryLog}
-                        query={{
-                            reason: QUERY_LOG_REASON_FILTER.BLOCKED_BY_PARENTAL_CONTROL.QUERY,
-                        }}
-                    />
-
-                    <StatRow
-                        label={intl.getMessage('safe_search_used')}
-                        value={props.numReplacedSafesearch}
-                        percent={safesearchPercent()}
-                        icon="search"
-                        rowTheme="safeSearchUsed"
-                        tooltip={intl.getMessage('safe_search_used_tooltip')}
-                        linkTo={RoutePath.QueryLog}
-                        query={{ reason: QUERY_LOG_REASON_FILTER.SAFE_SEARCH.QUERY }}
                     />
 
                     <div class={s.rowDivider} />

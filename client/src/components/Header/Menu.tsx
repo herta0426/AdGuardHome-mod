@@ -28,12 +28,6 @@ const MENU_ITEMS = [
         text: 'query_log',
         order: 3,
     },
-    {
-        route: MENU_URLS.guide,
-        icon: 'setup',
-        text: 'setup_guide',
-        order: 4,
-    },
 ];
 
 const SETTINGS_ITEMS = [
@@ -53,10 +47,6 @@ const SETTINGS_ITEMS = [
         route: SETTINGS_URLS.clients,
         text: 'client_settings',
     },
-    {
-        route: SETTINGS_URLS.dhcp,
-        text: 'dhcp_settings',
-    },
 ];
 
 const FILTERS_ITEMS = [
@@ -71,10 +61,6 @@ const FILTERS_ITEMS = [
     {
         route: FILTERS_URLS.dns_rewrites,
         text: 'dns_rewrites',
-    },
-    {
-        route: FILTERS_URLS.blocked_services,
-        text: 'blocked_services',
     },
     {
         route: FILTERS_URLS.custom_rules,

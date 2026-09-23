@@ -62,6 +62,7 @@ export const getListSummary = (list: string): string => {
 
 /**
  * Returns blocking mode options with i18n text.
+ * Only the default mode is offered: the other blocking modes were removed.
  * Factory function — re-executes on each render for locale correctness.
  */
 export const getBlockingModeOptions = () => {
@@ -70,26 +71,6 @@ export const getBlockingModeOptions = () => {
             text: intl.getMessage('dns_blocking_mode_default'),
             value: BLOCKING_MODES.default,
             description: intl.getMessage('dns_blocking_mode_default_desc'),
-        },
-        {
-            text: intl.getMessage('dns_blocking_mode_refused'),
-            value: BLOCKING_MODES.refused,
-            description: intl.getMessage('dns_blocking_mode_refused_desc'),
-        },
-        {
-            text: intl.getMessage('dns_blocking_mode_nxdomain'),
-            value: BLOCKING_MODES.nxdomain,
-            description: intl.getMessage('dns_blocking_mode_nxdomain_desc'),
-        },
-        {
-            text: intl.getMessage('dns_blocking_mode_null_ip'),
-            value: BLOCKING_MODES.null_ip,
-            description: intl.getMessage('dns_blocking_mode_null_ip_desc'),
-        },
-        {
-            text: intl.getMessage('dns_blocking_mode_custom_ip'),
-            value: BLOCKING_MODES.custom_ip,
-            description: intl.getMessage('dns_blocking_mode_custom_ip_desc'),
         },
     ];
 };

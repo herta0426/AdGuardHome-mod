@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import cn from 'classnames';
 
-import { REPOSITORY, PRIVACY_POLICY_LINK, THEMES } from '../../helpers/constants';
+import { THEMES } from '../../helpers/constants';
 import { LANGUAGES } from '../../helpers/twosky';
 import i18n from '../../i18n';
 
@@ -15,22 +15,6 @@ import { setHtmlLangAttr, setUITheme } from '../../helpers/helpers';
 
 import { changeLanguage, changeTheme } from '../../actions';
 import { RootState } from '../../initialState';
-
-const linksData = [
-    {
-        href: REPOSITORY.URL,
-        name: 'homepage',
-    },
-    {
-        href: PRIVACY_POLICY_LINK,
-        name: 'privacy_policy',
-    },
-    {
-        href: REPOSITORY.ISSUES,
-        className: 'btn btn-outline-primary btn-sm footer__link--report',
-        name: 'report_an_issue',
-    },
-];
 
 const Footer = () => {
     const { t } = useTranslation();
@@ -78,18 +62,6 @@ const Footer = () => {
         </div>
     );
 
-    const renderLinks = (linksData: any) =>
-        linksData.map(({ name, href, className = '' }: any) => (
-            <a
-                key={name}
-                href={href}
-                className={cn('footer__link', className)}
-                target="_blank"
-                rel="noopener noreferrer">
-                {t(name)}
-            </a>
-        ));
-
     const renderThemeButtons = () => {
         const currentValue = isLoggedIn ? currentTheme : currentThemeLocal;
 
@@ -134,8 +106,6 @@ const Footer = () => {
             <footer className="footer">
                 <div className="container">
                     <div className="footer__row">
-                        <div className="footer__column footer__column--links">{renderLinks(linksData)}</div>
-
                         <div className="footer__column footer__column--theme">
                             <div className="footer__themes">
                                 <div className="btn-group">{renderThemeButtons()}</div>

@@ -80,7 +80,6 @@ export const Menu = (props: Props) => {
                             path: Paths.Clients,
                             routePath: RoutePath.Clients,
                         },
-                        { label: 'DHCP', path: Paths.Dhcp, routePath: RoutePath.Dhcp },
                     ]}
                     isActive={isActive}
                 />
@@ -104,11 +103,6 @@ export const Menu = (props: Props) => {
                             routePath: RoutePath.DnsRewrites,
                         },
                         {
-                            label: intl.getMessage('blocked_services'),
-                            path: Paths.BlockedServices,
-                            routePath: RoutePath.BlockedServices,
-                        },
-                        {
                             label: intl.getMessage('user_rules_title'),
                             path: Paths.CustomRules,
                             routePath: RoutePath.CustomRules,
@@ -126,17 +120,6 @@ export const Menu = (props: Props) => {
                         <Icon class={s.linkIcon} icon="log" />
                         <span class={theme.common.textOverflow}>
                             {intl.getMessage('query_log')}
-                        </span>
-                    </Link>
-                </div>
-                <div class={cn(s.menuLinkWrapper)}>
-                    <Link
-                        class={cn(s.menuLink, { [s.activeLink]: isActive(Paths.Guide) })}
-                        to={RoutePath.Guide}
-                    >
-                        <Icon class={s.linkIcon} icon="faq" />
-                        <span class={theme.common.textOverflow}>
-                            {intl.getMessage('setup_guide')}
                         </span>
                     </Link>
                 </div>

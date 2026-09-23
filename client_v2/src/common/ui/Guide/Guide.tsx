@@ -27,7 +27,7 @@ type PlatformLayout = {
 
 type PlatformLayouts = Record<string, PlatformLayout>;
 
-const RouterLayout = (props: PlatformLayoutProps) => (
+const RouterLayout = (_props: PlatformLayoutProps) => (
     <div class={s.guideContent}>
         <div class={s.title}>{intl.getMessage('setup_devices_router_title')}</div>
         <div class={s.guideText}>
@@ -51,14 +51,7 @@ const RouterLayout = (props: PlatformLayoutProps) => (
             </ol>
             <div class={s.guideParagraph}>
                 {intl.getMessage('setup_devices_router_desc_2', {
-                    a: (text: string) =>
-                        props.isInstall ? (
-                            text
-                        ) : (
-                            <A href={Paths.Dhcp} class={s.dnsLink}>
-                                {text}
-                            </A>
-                        ),
+                    a: (text: string) => text,
                 })}
             </div>
         </div>

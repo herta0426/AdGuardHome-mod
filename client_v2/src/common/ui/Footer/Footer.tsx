@@ -8,7 +8,7 @@ import intl, { type LocalesType } from 'panel/common/intl';
 
 import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStorageHelper';
 import { LanguageDropdown } from '../LanguageDropdown/LanguageDropdown';
-import { REPOSITORY, PRIVACY_POLICY_LINK, THEMES } from 'panel/helpers/constants';
+import { REPOSITORY, THEMES } from 'panel/helpers/constants';
 import { LANGUAGES, LANGUAGE_NAMES } from 'panel/helpers/twosky';
 import { getTheme, setHtmlLangAttr, setUITheme } from 'panel/helpers/helpers';
 import {
@@ -29,8 +29,6 @@ export const Footer = () => {
     const isLoggedIn = () => profileName() !== '';
 
     const linksData = createMemo(() => [
-        { href: PRIVACY_POLICY_LINK, name: intl.getMessage('privacy_policy') },
-        { href: REPOSITORY.ISSUES, name: intl.getMessage('report_an_issue') },
         { href: REPOSITORY.RELEASE_NOTES, name: intl.getMessage('release_notes') },
     ]);
 

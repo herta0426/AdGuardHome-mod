@@ -2,9 +2,8 @@ import { createSignal, createMemo, createEffect, onCleanup, Show } from 'solid-j
 
 import theme from 'panel/lib/theme';
 import { PageLoader } from 'panel/common/ui/Loader';
-import { dashboardState, toggleProtection, getClients } from 'panel/stores/dashboard';
+import { dashboardState, toggleProtection } from 'panel/stores/dashboard';
 import { statsState, getStats, getStatsConfig, enableStatistics } from 'panel/stores/stats';
-import { accessState, getAccessList } from 'panel/stores/access';
 import { getStoredStatsPeriod } from 'panel/helpers/statistics';
 import { LocalStorageHelper, LOCAL_STORAGE_KEYS } from 'panel/helpers/localStorageHelper';
 import { ONE_SECOND_IN_MS, HOUR, DAY, STATS_INTERVALS_DAYS } from 'panel/helpers/constants';
@@ -13,7 +12,6 @@ import { Header, getPeriodLabel } from './blocks/Header/Header';
 import { StatCards } from './blocks/StatCards';
 import { EmptyState } from './blocks/EmptyState/EmptyState';
 import { GeneralStatistics } from './blocks/GeneralStatistics';
-import { TopClients } from './blocks/TopClients';
 import { TopQueriedDomains } from './blocks/TopQueriedDomains';
 import { TopBlockedDomains } from './blocks/TopBlockedDomains';
 import { TopUpstreams } from './blocks/TopUpstreams';
@@ -93,15 +91,11 @@ export const Dashboard = () => {
         const period = effectivePeriod();
         getStats(period);
         getStatsConfig();
-        getClients();
-        getAccessList();
     });
 
     const handleRefreshStats = () => {
         getStats(effectivePeriod());
         getStatsConfig();
-        getClients();
-        getAccessList();
     };
 
     const handleToggleProtection = (enabled: boolean, duration?: number) => {
@@ -118,8 +112,7 @@ export const Dashboard = () => {
         LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.STATS_PERIOD, period);
     };
 
-    const isLoading = () =>
-        statsState.processingStats || statsState.processingGetConfig || accessState.processing;
+    const isLoading = () => statsState.processingStats || statsState.processingGetConfig;
 
     const hasStatsData = () =>
         statsState.numDnsQueries > 0 ||
@@ -162,12 +155,8 @@ export const Dashboard = () => {
                     <StatCards
                         numDnsQueries={statsState.numDnsQueries}
                         numBlockedFiltering={statsState.numBlockedFiltering}
-                        numReplacedSafebrowsing={statsState.numReplacedSafebrowsing}
-                        numReplacedParental={statsState.numReplacedParental}
                         dnsQueries={statsState.dnsQueries}
                         blockedFiltering={statsState.blockedFiltering}
-                        replacedSafebrowsing={statsState.replacedSafebrowsing}
-                        replacedParental={statsState.replacedParental}
                         timeUnits={statsState.timeUnits}
                     />
 
@@ -185,16 +174,7 @@ export const Dashboard = () => {
                             <GeneralStatistics
                                 numDnsQueries={statsState.numDnsQueries}
                                 numBlockedFiltering={statsState.numBlockedFiltering}
-                                numReplacedSafebrowsing={statsState.numReplacedSafebrowsing}
-                                numReplacedParental={statsState.numReplacedParental}
-                                numReplacedSafesearch={statsState.numReplacedSafesearch}
                                 avgProcessingTime={statsState.avgProcessingTime}
-                            />
-
-                            <TopClients
-                                topClients={statsState.topClients}
-                                numDnsQueries={statsState.numDnsQueries}
-                                period={effectivePeriod()}
                             />
 
                             <TopQueriedDomains

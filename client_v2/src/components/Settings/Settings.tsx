@@ -1,4 +1,4 @@
-import { createMemo, createEffect, onMount, Show, untrack } from 'solid-js';
+import { createMemo, createEffect, onMount, Show } from 'solid-js';
 import { createSignal } from 'solid-js';
 import cn from 'clsx';
 
@@ -11,25 +11,16 @@ import { Button } from 'panel/common/ui/Button';
 import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
 import theme from 'panel/lib/theme';
 import { PageLoader } from 'panel/common/ui/Loader';
-import { initSettings, toggleSetting, settingsState } from 'panel/stores/settings';
+import { initSettings, settingsState } from 'panel/stores/settings';
 import { getStatsConfig, setStatsConfig, resetStats, statsState } from 'panel/stores/stats';
 import { getLogsConfig, setLogsConfig, clearLogs, queryLogsState } from 'panel/stores/queryLogs';
-import { getFilteringStatus, filteringState } from 'panel/stores/filtering';
-import { SAFE_SEARCH_PROVIDERS } from 'panel/helpers/constants';
 import { addSuccessToast } from 'panel/stores/toasts';
 
 import { SettingRow } from 'panel/common/ui/SettingRow';
 import { StatsConfig } from './StatsConfig';
 import { LogsConfig } from './LogsConfig';
-import { FiltersConfig } from './FiltersConfig';
-import { SafeSearchModal } from './SafeSearchModal';
 import { IgnoredDomainsModal } from './IgnoredDomainsModal';
-import {
-    getRetentionSummary,
-    getSafeSearchProviderTitle,
-    buildQueryLogConfig,
-    buildStatsConfig,
-} from './helpers';
+import { getRetentionSummary, buildQueryLogConfig, buildStatsConfig } from './helpers';
 
 import s from './Settings.module.pcss';
 
@@ -37,34 +28,19 @@ export const Settings = () => {
     onMount(() => {
         initSettings();
         getStatsConfig();
-        getFilteringStatus();
         getLogsConfig();
     });
 
     const [logsModalOpen, setLogsModalOpen] = createSignal(false);
     const [statsModalOpen, setStatsModalOpen] = createSignal(false);
-    const [safesearchProvidersOpen, setSafesearchProvidersOpen] = createSignal(false);
     const [showClearLogsConfirm, setShowClearLogsConfirm] = createSignal(false);
     const [showClearStatsConfirm, setShowClearStatsConfirm] = createSignal(false);
     const [logsIgnoredModalOpen, setLogsIgnoredModalOpen] = createSignal(false);
     const [statsIgnoredModalOpen, setStatsIgnoredModalOpen] = createSignal(false);
-    const [safesearchProcessing, setSafesearchProcessing] = createSignal(false);
-
-    const safesearch = createMemo(() => settingsState.settingsList?.safesearch);
-    const safesearchEnabled = createMemo(() => safesearch()?.enabled ?? false);
 
     const logsRetentionSummary = createMemo(() => getRetentionSummary(queryLogsState.interval));
 
     const statsRetentionSummary = createMemo(() => getRetentionSummary(statsState.interval));
-
-    const safesearchSummary = createMemo(() => {
-        const ss = safesearch();
-        if (!ss) return '';
-        const selected = Object.keys(SAFE_SEARCH_PROVIDERS)
-            .filter((key) => (ss as Record<string, boolean>)[key])
-            .map(getSafeSearchProviderTitle);
-        return selected.join(', ');
-    });
 
     const logsIgnoredSummary = createMemo(() => {
         const ignored = queryLogsState.ignored;
@@ -77,20 +53,6 @@ export const Settings = () => {
         if (!ignored || ignored.length === 0) return '';
         return ignored.join(', ');
     });
-
-    // Handler functions
-    const handleSafeSearchSave = (newProviders: Record<string, boolean>) => {
-        const ss = untrack(() => settingsState.settingsList.safesearch);
-        setSafesearchProcessing(true);
-        toggleSetting('safesearch', { ...ss, ...newProviders })
-            .then((result) => {
-                if (result) {
-                    setSafesearchProvidersOpen(false);
-                    addSuccessToast(intl.getMessage('changes_saved_success'));
-                }
-            })
-            .finally(() => setSafesearchProcessing(false));
-    };
 
     const handleLogsIgnoredSave = (ignored: string[]) => {
         setLogsConfig(buildQueryLogConfig(queryLogsState, { ignored })).then((result) => {
@@ -158,70 +120,6 @@ export const Settings = () => {
                     when={isLoading()}
                     fallback={
                         <>
-                            <h2
-                                id="filtering"
-                                class={cn(
-                                    theme.layout.subtitle,
-                                    theme.title.h5,
-                                    theme.title.h4_tablet,
-                                    s.title,
-                                )}
-                            >
-                                {intl.getMessage('settings_filtering_and_security')}
-                            </h2>
-
-                            <FiltersConfig
-                                initialValues={{
-                                    interval: filteringState.interval,
-                                    enabled: filteringState.enabled,
-                                }}
-                                processing={filteringState.processingSetConfig}
-                            />
-
-                            <SettingRow
-                                variant="switch"
-                                id="safebrowsing"
-                                title={intl.getMessage('settings_browsing_security')}
-                                description={intl.getMessage('settings_browsing_security_desc')}
-                                checked={!!settingsState.settingsList?.safebrowsing?.enabled}
-                                onChange={(v) => toggleSetting('safebrowsing', !v)}
-                            />
-
-                            <SettingRow
-                                variant="switch"
-                                id="parental"
-                                title={intl.getMessage('settings_parental_control')}
-                                description={intl.getMessage('settings_parental_control_desc')}
-                                checked={!!settingsState.settingsList?.parental?.enabled}
-                                onChange={(v) => toggleSetting('parental', !v)}
-                            />
-
-                            <SettingRow
-                                variant="switch-link"
-                                id="safesearch"
-                                title={intl.getMessage('settings_safe_search')}
-                                description={intl.getMessage('settings_safe_search_desc')}
-                                checked={safesearchEnabled()}
-                                value={safesearchSummary()}
-                                divider
-                                onChange={(v) => {
-                                    const ss = untrack(() => settingsState.settingsList.safesearch);
-                                    toggleSetting('safesearch', { ...ss, enabled: v });
-                                }}
-                                onClick={() => setSafesearchProvidersOpen(true)}
-                            />
-
-                            <SafeSearchModal
-                                open={safesearchProvidersOpen()}
-                                onClose={() => setSafesearchProvidersOpen(false)}
-                                providers={
-                                    settingsState.settingsList.safesearch as Record<string, boolean>
-                                }
-                                enabled={safesearchEnabled()}
-                                processing={safesearchProcessing()}
-                                onSave={handleSafeSearchSave}
-                            />
-
                             <div class={s.section} id="query-log">
                                 <SettingRow
                                     variant="switch"

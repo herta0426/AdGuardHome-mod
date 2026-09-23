@@ -1,5 +1,4 @@
 import { test, expect } from '@playwright/test';
-import { execSync } from 'child_process';
 import { ADMIN_USERNAME, ADMIN_PASSWORD } from '../constants';
 
 test.describe('General Settings', () => {
@@ -14,76 +13,33 @@ test.describe('General Settings', () => {
         await page.waitForURL((url) => !url.href.endsWith('/login.html'));
     });
 
-    test('should toggle browsing security feature and verify DNS changes', async ({ page }) => {
+    test('should toggle query log configuration', async ({ page }) => {
         await page.goto('/#settings');
 
-        const browsingSecurity = await page.getByTestId('safebrowsing');
-        const browsingSecurityLabel = await browsingSecurity.locator('xpath=following-sibling::*[1]');
+        const queryLogEnabled = page.getByTestId('logs_enabled');
+        const queryLogEnabledLabel = queryLogEnabled.locator('xpath=following-sibling::*[1]');
 
-        const initialState = await browsingSecurity.isChecked();
+        const initialState = await queryLogEnabled.isChecked();
 
-        if (!initialState) {
-            await browsingSecurityLabel.click();
-            await expect(browsingSecurity).toBeChecked();
-        }
+        await queryLogEnabledLabel.click();
+        await expect(queryLogEnabled).toBeChecked({ checked: !initialState });
 
-        const resultEnabled = execSync('dig @127.0.0.1 totalvirus.com').toString();
-
-        await browsingSecurityLabel.click();
-        await expect(browsingSecurity).not.toBeChecked();
-
-        const resultDisabled = execSync('dig @127.0.0.1 totalvirus.com').toString();
-
-        expect(resultEnabled).not.toEqual(resultDisabled);
-
-        if (initialState) {
-            await browsingSecurityLabel.click();
-            await expect(browsingSecurity).toBeChecked();
-        }
+        await queryLogEnabledLabel.click();
+        await expect(queryLogEnabled).toBeChecked({ checked: initialState });
     });
 
-    test('should toggle parental control feature and verify DNS changes', async ({ page }) => {
+    test('should toggle statistics configuration', async ({ page }) => {
         await page.goto('/#settings');
 
-        const parentalControl = page.getByTestId('parental');
-        const parentalControlLabel = await parentalControl.locator('xpath=following-sibling::*[1]');
+        const statisticsEnabled = page.getByTestId('stats_config_enabled');
+        const statisticsEnabledLabel = statisticsEnabled.locator('xpath=following-sibling::*[1]');
 
-        const initialState = await parentalControl.isChecked();
+        const initialState = await statisticsEnabled.isChecked();
 
-        if (!initialState) {
-            await parentalControlLabel.click();
-            await expect(parentalControl).toBeChecked();
-        }
+        await statisticsEnabledLabel.click();
+        await expect(statisticsEnabled).toBeChecked({ checked: !initialState });
 
-        const resultEnabled = execSync('dig @127.0.0.1 pornhub.com').toString();
-
-        await parentalControlLabel.click();
-        await expect(parentalControl).not.toBeChecked();
-
-        const resultDisabled = execSync('dig @127.0.0.1 pornhub.com').toString();
-
-        expect(resultEnabled).not.toEqual(resultDisabled);
-
-        if (initialState) {
-            await parentalControlLabel.click();
-            await expect(parentalControl).toBeChecked();
-        }
-    });
-
-    test('should toggle safe search feature', async ({ page }) => {
-        await page.goto('/#settings');
-
-        const safeSearch = page.getByTestId('safesearch');
-        const safeSearchLabel = await safeSearch.locator('xpath=following-sibling::*[1]');
-
-        const initialState = await safeSearch.isChecked();
-
-        await safeSearchLabel.click();
-
-        await expect(safeSearch).not.toBeChecked({ checked: initialState });
-
-        await safeSearchLabel.click();
-
-        await expect(safeSearch).toBeChecked({ checked: initialState });
+        await statisticsEnabledLabel.click();
+        await expect(statisticsEnabled).toBeChecked({ checked: initialState });
     });
 });

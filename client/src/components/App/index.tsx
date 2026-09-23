@@ -29,19 +29,15 @@ import Header from '../Header';
 import { getDnsStatus, getTimerStatus } from '../../actions';
 
 import Dashboard from '../../containers/Dashboard';
-import SetupGuide from '../../containers/SetupGuide';
 import Settings from '../../containers/Settings';
 import Dns from '../../containers/Dns';
 import Encryption from '../../containers/Encryption';
 
-import Dhcp from '../Settings/Dhcp';
 import Clients from '../../containers/Clients';
 import DnsBlocklist from '../../containers/DnsBlocklist';
 import DnsAllowlist from '../../containers/DnsAllowlist';
 import DnsRewrites from '../../containers/DnsRewrites';
 import CustomRules from '../../containers/CustomRules';
-
-import Services from '../Filters/Services';
 
 import Logs from '../Logs';
 import ProtectionTimer from '../ProtectionTimer';
@@ -58,10 +54,6 @@ const ROUTES = [
         component: Logs,
     },
     {
-        path: MENU_URLS.guide,
-        component: SetupGuide,
-    },
-    {
         path: SETTINGS_URLS.settings,
         component: Settings,
     },
@@ -72,10 +64,6 @@ const ROUTES = [
     {
         path: SETTINGS_URLS.encryption,
         component: Encryption,
-    },
-    {
-        path: SETTINGS_URLS.dhcp,
-        component: Dhcp,
     },
     {
         path: SETTINGS_URLS.clients,
@@ -96,10 +84,6 @@ const ROUTES = [
     {
         path: FILTERS_URLS.custom_rules,
         component: CustomRules,
-    },
-    {
-        path: FILTERS_URLS.blocked_services,
-        component: Services,
     },
 ];
 

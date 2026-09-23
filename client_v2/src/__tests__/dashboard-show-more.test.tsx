@@ -3,13 +3,11 @@ import { render, screen } from '@solidjs/testing-library';
 import { HashRouter, Route } from '@solidjs/router';
 import { describe, it, expect } from 'vitest';
 
-import { TopClients } from 'panel/components/Dashboard/blocks/TopClients';
 import { TopQueriedDomains } from 'panel/components/Dashboard/blocks/TopQueriedDomains';
 import { TopBlockedDomains } from 'panel/components/Dashboard/blocks/TopBlockedDomains';
 import { TopUpstreams } from 'panel/components/Dashboard/blocks/TopUpstreams';
 import { UpstreamAvgTime } from 'panel/components/Dashboard/blocks/UpstreamAvgTime';
 import { DAY } from 'panel/helpers/constants';
-import { copyInDom } from 'panel/__tests__/helpers/copy';
 
 const renderWithRouter = (ui: () => JSX.Element) =>
     render(() => (
@@ -21,14 +19,6 @@ const renderWithRouter = (ui: () => JSX.Element) =>
 const getLinkHref = (testid: string) => screen.getByTestId(testid).getAttribute('href') ?? '';
 
 describe('Dashboard "Show more" links', () => {
-    it('Top clients card links to /top_clients', () => {
-        renderWithRouter(() => (
-            <TopClients topClients={[{ name: '10.0.0.1', count: 5 }]} numDnsQueries={100} />
-        ));
-        expect(screen.getByText(copyInDom('show_more'))).toBeInTheDocument();
-        expect(getLinkHref('show-more-top-clients')).toContain('/top_clients');
-    });
-
     it('Top queried domains card links to /top_queried_domains', () => {
         renderWithRouter(() => (
             <TopQueriedDomains

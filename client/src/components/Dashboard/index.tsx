@@ -6,7 +6,6 @@ import classNames from 'classnames';
 
 import Statistics from './Statistics';
 import Counters from './Counters';
-import Clients from './Clients';
 import QueriedDomains from './QueriedDomains';
 import BlockedDomains from './BlockedDomains';
 import { DISABLE_PROTECTION_TIMINGS, ONE_SECOND_IN_MS, SETTINGS_URLS, TIME_UNITS } from '../../helpers/constants';
@@ -196,21 +195,13 @@ const Dashboard = ({
                         <Statistics
                             dnsQueries={stats.dnsQueries}
                             blockedFiltering={stats.blockedFiltering}
-                            replacedSafebrowsing={stats.replacedSafebrowsing}
-                            replacedParental={stats.replacedParental}
                             numDnsQueries={stats.numDnsQueries}
                             numBlockedFiltering={stats.numBlockedFiltering}
-                            numReplacedSafebrowsing={stats.numReplacedSafebrowsing}
-                            numReplacedParental={stats.numReplacedParental}
                         />
                     </div>
 
-                    <div className="col-lg-6">
+                    <div className="col-lg-12">
                         <Counters subtitle={subtitle} refreshButton={refreshButton} />
-                    </div>
-
-                    <div className="col-lg-6">
-                        <Clients subtitle={subtitle} refreshButton={refreshButton} />
                     </div>
 
                     <div className="col-lg-6">
