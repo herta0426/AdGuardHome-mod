@@ -97,8 +97,7 @@ jobs:
           set -e -f -u
 
           go mod tidy
-          git --no-pager diff --stat go.mod go.sum
-          git --no-pager diff go.mod
+          git --no-pager diff go.mod go.sum
 
       - name: Test the backend
         run: go test ./...
