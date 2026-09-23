@@ -3,7 +3,6 @@ import { loadingBarReducer } from 'react-redux-loading-bar';
 
 import toasts from './toasts';
 import encryption from './encryption';
-import clients from './clients';
 import access from './access';
 import rewrites from './rewrites';
 import services from './services';
@@ -21,7 +20,6 @@ export default combineReducers({
     filtering,
     toasts,
     encryption,
-    clients,
     access,
     rewrites,
     services,

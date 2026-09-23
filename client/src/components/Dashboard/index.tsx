@@ -29,7 +29,6 @@ interface DashboardProps {
     getStats: (...args: unknown[]) => unknown;
     getStatsConfig: (...args: unknown[]) => unknown;
     toggleProtection: (...args: unknown[]) => unknown;
-    getClients: (...args: unknown[]) => unknown;
     getAccessList: () => (dispatch: any) => void;
 }
 

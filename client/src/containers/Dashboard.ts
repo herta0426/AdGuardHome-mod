@@ -1,6 +1,6 @@
 import { connect } from 'react-redux';
 
-import { toggleProtection, getClients } from '../actions';
+import { toggleProtection } from '../actions';
 import { getStats, getStatsConfig } from '../actions/stats';
 import { getAccessList } from '../actions/access';
 
@@ -15,7 +15,6 @@ const mapStateToProps = (state: RootState) => {
 
 type DispatchProps = {
     toggleProtection: (...args: unknown[]) => unknown;
-    getClients: (...args: unknown[]) => unknown;
     getStats: (...args: unknown[]) => unknown;
     getStatsConfig: (...args: unknown[]) => unknown;
     getAccessList: () => (dispatch: any) => void;
@@ -23,7 +22,6 @@ type DispatchProps = {
 
 const mapDispatchToProps: DispatchProps = {
     toggleProtection,
-    getClients,
     getStats,
     getStatsConfig,
     getAccessList,
