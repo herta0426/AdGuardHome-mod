@@ -221,16 +221,6 @@ export type StatsData = {
     topUpstreamsResponses: { name: string; count: number }[];
 };
 
-export type ClientsData = {
-    processing: boolean;
-    processingAdding: boolean;
-    processingDeleting: boolean;
-    processingUpdating: boolean;
-    isModalOpen: boolean;
-    modalClientName: string;
-    modalType: string;
-};
-
 export type AccessData = {
     processing: boolean;
     processingSet: boolean;
@@ -323,7 +313,6 @@ export type ServicesData = {
 
 export type RootState = {
     access?: AccessData;
-    clients?: ClientsData;
     dashboard?: DashboardData;
     dnsConfig?: DnsConfigData;
     encryption?: EncryptionData;
@@ -359,15 +348,6 @@ export const initialState: RootState = {
         allowed_clients: '',
         disallowed_clients: '',
         blocked_hosts: '',
-    },
-    clients: {
-        processing: true,
-        processingAdding: false,
-        processingDeleting: false,
-        processingUpdating: false,
-        isModalOpen: false,
-        modalClientName: '',
-        modalType: '',
     },
     dashboard: {
         processing: true,

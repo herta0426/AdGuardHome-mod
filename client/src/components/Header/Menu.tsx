@@ -43,10 +43,6 @@ const SETTINGS_ITEMS = [
         route: SETTINGS_URLS.encryption,
         text: 'encryption_settings',
     },
-    {
-        route: SETTINGS_URLS.clients,
-        text: 'client_settings',
-    },
 ];
 
 const FILTERS_ITEMS = [
