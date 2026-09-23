@@ -1,1 +1,0 @@
-export { TopQueriedDomainsPage } from './TopQueriedDomainsPage';

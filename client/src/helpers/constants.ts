@@ -143,7 +143,6 @@ export const MENU_URLS = {
 
 export const SETTINGS_URLS = {
     encryption: '/encryption',
-    dhcp: '/dhcp',
     dns: '/dns',
     settings: '/settings',
     clients: '/clients',
@@ -396,12 +395,6 @@ export const DNS_REQUEST_OPTIONS = {
     LOAD_BALANCING: 'load_balance',
 };
 
-export const DHCP_FORM_NAMES = {
-    DHCPv4: 'dhcpv4',
-    DHCPv6: 'dhcpv6',
-    DHCP_INTERFACES: 'dhcpInterfaces',
-};
-
 export const FORM_NAME = {
     UPSTREAM: 'upstream',
     DOMAIN_CHECK: 'domainCheck',
@@ -421,7 +414,6 @@ export const FORM_NAME = {
     LOGIN: 'login',
     CACHE: 'cache',
     MOBILE_CONFIG: 'mobileConfig',
-    ...DHCP_FORM_NAMES,
 };
 
 export const SMALL_SCREEN_SIZE = 767;
@@ -437,33 +429,6 @@ export const UINT32_RANGE = {
 export const RETENTION_RANGE = {
     MIN: 1,
     MAX: 365 * 24,
-};
-
-export const DHCP_VALUES_PLACEHOLDERS = {
-    ipv4: {
-        subnet_mask: '255.255.255.0',
-        lease_duration: SECONDS_IN_DAY.toString(),
-    },
-    ipv6: {
-        range_start: '2001::1',
-        range_end: 'ff',
-        lease_duration: SECONDS_IN_DAY.toString(),
-    },
-};
-
-export const DHCP_DESCRIPTION_PLACEHOLDERS = {
-    ipv4: {
-        gateway_ip: 'dhcp_form_gateway_input',
-        subnet_mask: 'dhcp_form_subnet_input',
-        range_start: 'dhcp_form_range_start',
-        range_end: 'dhcp_form_range_end',
-        lease_duration: 'dhcp_form_lease_input',
-    },
-    ipv6: {
-        range_start: 'dhcp_form_range_start',
-        range_end: 'dhcp_form_range_end',
-        lease_duration: 'dhcp_form_lease_input',
-    },
 };
 
 export const TOAST_TRANSITION_TIMEOUT = 500;

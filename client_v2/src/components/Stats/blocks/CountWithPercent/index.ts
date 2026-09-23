@@ -1,1 +1,0 @@
-export { CountWithPercent } from './CountWithPercent';

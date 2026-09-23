@@ -1,1 +1,0 @@
-export { QueriesTooltip } from './QueriesTooltip';

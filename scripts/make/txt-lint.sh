@@ -120,8 +120,6 @@ readonly go
 	./.github/*.yml \
 	./.github/*/*.yaml \
 	./.github/*/*.yml \
-	./internal/next/*.yaml \
-	./snap/*.yaml \
 	;
 
 find_with_ignore \

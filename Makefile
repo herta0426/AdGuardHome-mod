@@ -19,7 +19,7 @@ GO.MACRO = $${GO:-go}
 VERBOSE.MACRO = $${VERBOSE:-0}
 
 CHANNEL = development
-CLIENT_DIR = client_v2
+CLIENT_DIR = client
 DIST_DIR = dist
 GOAMD64 = v1
 GOPROXY = https://proxy.golang.org|direct
@@ -34,8 +34,6 @@ RACE = 0
 REVISION = $${REVISION:-$$(git rev-parse --short HEAD)}
 SIGN = 1
 VERSION = v0.0.0
-
-NEXTAPI = 0
 
 # Macros for the build-release target.  If FRONTEND_PREBUILT is 0, the default,
 # the macro $(BUILD_RELEASE_DEPS_$(FRONTEND_PREBUILT)) expands into
@@ -62,7 +60,6 @@ ENV = env \
 	GOTOOLCHAIN='$(GOTOOLCHAIN)' \
 	GPG_KEY='$(GPG_KEY)' \
 	GPG_KEY_PASSPHRASE='$(GPG_KEY_PASSPHRASE)' \
-	NEXTAPI='$(NEXTAPI)' \
 	PATH="$${PWD}/bin:$$("$(GO.MACRO)" env GOPATH)/bin:$${PATH}" \
 	RACE='$(RACE)' \
 	REVISION="$(REVISION)" \
@@ -93,11 +90,8 @@ deps: js-deps go-deps
 lint: js-lint go-lint
 test: js-test go-test
 
-# Here and below, keep $(SHELL) in quotes, because on Windows this will expand
-# to something like "C:/Program Files/Git/usr/bin/sh.exe".
-.PHONY: build-docker
-build-docker: ; $(ENV) "$(SHELL)" ./scripts/make/build-docker.sh
-
+# Keep $(SHELL) in quotes, because on Windows this will expand to something
+# like "C:/Program Files/Git/usr/bin/sh.exe".
 .PHONY: build-release pack-release
 build-release: $(BUILD_RELEASE_DEPS_$(FRONTEND_PREBUILT))
 	$(ENV) "$(SHELL)" ./scripts/make/build-release.sh
@@ -125,19 +119,12 @@ go-upd-tools: ; $(ENV)          "$(SHELL)"    ./scripts/make/go-upd-tools.sh
 .PHONY: go-check
 go-check: go-lint go-test
 
-# A quick check to make sure that all operating systems relevant to the
-# development of the project can be typechecked and built successfully.
-#
-# NOTE: It is also important to check on both 32- and 64-bit systems.
+# A quick check to make sure that the supported Linux architectures can be
+# typechecked and built successfully.
 .PHONY: go-os-check
 go-os-check:
-	$(ENV) GOOS='darwin'  "$(GO.MACRO)" vet ./...
-	$(ENV) GOOS='freebsd' "$(GO.MACRO)" vet ./...
-	$(ENV) GOOS='openbsd' "$(GO.MACRO)" vet ./...
-	$(ENV) GOOS='windows' "$(GO.MACRO)" vet ./...
-
 	$(ENV) GOARCH='amd64' GOOS='linux' "$(GO.MACRO)" vet ./...
-	$(ENV) GOARCH='386'   GOOS='linux' "$(GO.MACRO)" vet ./...
+	$(ENV) GOARCH='arm64' GOOS='linux' "$(GO.MACRO)" vet ./...
 
 .PHONY: txt-lint
 txt-lint: ; $(ENV) "$(SHELL)" ./scripts/make/txt-lint.sh

@@ -602,22 +602,16 @@ func isUpdateEnabled(
 		return false
 	}
 
-	switch version.Channel() {
-	case
-		version.ChannelDevelopment,
-		version.ChannelCandidate:
-		if isCustomURL {
-			l.DebugContext(ctx, "updates are enabled because custom url is used")
-		} else {
-			l.DebugContext(ctx, "updates are disabled for development and candidate builds")
-		}
-
-		return isCustomURL
-	default:
-		l.DebugContext(ctx, "updates are enabled")
-
-		return true
+	// This build is an unofficial mod of AdGuard Home, and the official update
+	// server only serves the official builds, so updates are enabled only when
+	// a custom update URL is configured explicitly.
+	if isCustomURL {
+		l.DebugContext(ctx, "updates are enabled because custom url is used")
+	} else {
+		l.DebugContext(ctx, "updates are disabled for the mod builds")
 	}
+
+	return isCustomURL
 }
 
 // webConfig is a configuration structure for webAPI.
