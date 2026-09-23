@@ -4,7 +4,7 @@ import { nanoid } from 'nanoid';
 import classNames from 'classnames';
 import { useTranslation } from 'react-i18next';
 
-import { Link, useHistory } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 import { checkFiltered, getBlockingClientName } from '../../../helpers/helpers';
 import { BLOCK_ACTIONS } from '../../../helpers/constants';
@@ -40,7 +40,6 @@ interface ClientCellProps {
 const ClientCell = ({ client, client_id, client_info, domain, reason }: ClientCellProps) => {
     const { t } = useTranslation();
     const dispatch = useDispatch();
-    const history = useHistory();
 
     const autoClients = useSelector((state: RootState) => state.dashboard.autoClients, shallowEqual);
 
@@ -75,8 +74,6 @@ const ClientCell = ({ client, client_id, client_info, domain, reason }: ClientCe
     const processedData = Object.entries(data);
 
     const isFiltered = checkFiltered(reason);
-
-    const clientIds = clients.map((c: any) => c.ids).flat();
 
     const nameClass = classNames('w-90 o-hidden d-flex flex-column', {
         'mt-2': isDetailed && !client_info?.name && !whoisAvailable,
@@ -141,15 +138,6 @@ const ClientCell = ({ client, client_id, client_info, domain, reason }: ClientCe
                 disabled: lastRuleInAllowlist,
             },
         ];
-
-        if (!clientIds.includes(client)) {
-            BUTTON_OPTIONS.push({
-                name: 'add_persistent_client',
-                onClick: () => {
-                    history.push(`/#clients?clientId=${client}`);
-                },
-            });
-        }
 
         const getOptions = (options: any) => {
             if (options.length === 0) {

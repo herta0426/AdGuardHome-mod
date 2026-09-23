@@ -33,7 +33,6 @@ import Settings from '../../containers/Settings';
 import Dns from '../../containers/Dns';
 import Encryption from '../../containers/Encryption';
 
-import Clients from '../../containers/Clients';
 import DnsBlocklist from '../../containers/DnsBlocklist';
 import DnsAllowlist from '../../containers/DnsAllowlist';
 import DnsRewrites from '../../containers/DnsRewrites';
@@ -64,10 +63,6 @@ const ROUTES = [
     {
         path: SETTINGS_URLS.encryption,
         component: Encryption,
-    },
-    {
-        path: SETTINGS_URLS.clients,
-        component: Clients,
     },
     {
         path: FILTERS_URLS.dns_blocklists,
