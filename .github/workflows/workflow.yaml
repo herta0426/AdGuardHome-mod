@@ -153,13 +153,12 @@
               build-docker \
               ;
 'name': 'Test and snapshot workflow'
+# NOTE: Disabled by default in this fork.  This workflow runs the whole test
+# suite on three operating systems and builds every supported platform, which
+# is too heavy for a personal mod.  Use the "Build Linux binaries" workflow for
+# regular builds and start this one manually when the full check is needed.
 'on':
-  'push':
-    'tags':
-      - 'v*'
-    'branches':
-      - '*'
-  'pull_request':
+  'workflow_dispatch':
 # Permissions are disabled for all the jobs by default, and then overridden for
 # specific jobs if needed.  This is a recommended practice for security reasons,
 # and also allows to avoid mistakes with permissions when creating new jobs.

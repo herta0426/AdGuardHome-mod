@@ -1,0 +1,162 @@
+name: Build Linux binaries
+
+# Builds the AdGuard Home mod for Linux and packs the release archives.
+#
+# Artifacts:
+#
+#   dist/AdGuardHome_linux_amd64.tar.gz  — x86_64
+#   dist/AdGuardHome_linux_arm64.tar.gz  — arm64
+#
+# Run it manually from the Actions tab, or push a tag named v* to also publish
+# a GitHub release with the archives attached.
+#
+# NOTE: The frontend is embedded into the Go binary, so it is built first.
+# CLIENT_DIR selects which frontend is embedded:
+#
+#   * client     — the classic UI, the same one the released builds ship;
+#   * client_v2  — the next-generation SolidJS UI.
+
+on:
+  push:
+    branches:
+      - master
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      client_dir:
+        description: Frontend to embed into the binary.
+        required: false
+        default: client
+        type: choice
+        options:
+          - client
+          - client_v2
+
+# Publishing a release requires a writable GITHUB_TOKEN.
+permissions:
+  contents: write
+
+env:
+  BUILD_DIR: build
+  CHANNEL: ${{ startsWith(github.ref, 'refs/tags/v') && 'release' || 'development' }}
+  CLIENT_DIR: ${{ inputs.client_dir || 'client' }}
+  DIST_DIR: dist
+  # The official Go module proxy is tried first, and the mainland-China mirror
+  # is used as a fallback.
+  GOPROXY: https://proxy.golang.org,https://goproxy.cn,direct
+  # Uncomment the line below to use a mainland-China npm mirror.
+  # NPM_CONFIG_REGISTRY: https://registry.npmmirror.com
+  # There is no GPG key in this repository, so the builds are not signed.
+  SIGN: '0'
+
+jobs:
+  build-linux:
+    name: Linux amd64 and arm64
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+        with:
+          # The version script needs all the branches and tags.
+          fetch-depth: 0
+          # Set to false to avoid GITHUB_TOKEN leaking.
+          #
+          # See https://github.com/actions/checkout/issues/485.
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+          cache-dependency-path: go.sum
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: ${{ env.CLIENT_DIR }}/package-lock.json
+
+      - name: Set the build version
+        id: version
+        run: |
+          #!/bin/sh
+
+          set -e -f -u
+
+          source_date_epoch="$(git log -1 --format=%ct)"
+          echo "SOURCE_DATE_EPOCH=${source_date_epoch}" >> "$GITHUB_ENV"
+
+          # In the development channel, the version script counts the commits
+          # since origin/master.  Create the ref if the pushed branch has a
+          # different name, for example main.
+          if ! git rev-parse --verify --quiet refs/remotes/origin/master >/dev/null; then
+            git update-ref refs/remotes/origin/master HEAD
+          fi
+
+          app_version="$(env CHANNEL="${CHANNEL}" sh ./scripts/make/version.sh)"
+          echo "APP_VERSION=${app_version}" >> "$GITHUB_ENV"
+          echo "version=${app_version}" >> "$GITHUB_OUTPUT"
+
+          printf 'Building version %s (channel %s)\n' "${app_version}" "${CHANNEL}"
+
+      - name: Install the frontend dependencies
+        run: make js-deps CLIENT_DIR="${CLIENT_DIR}"
+
+      - name: Build the frontend
+        run: make js-build CLIENT_DIR="${CLIENT_DIR}" VERBOSE=1
+
+      - name: Build the binaries
+        run: |
+          #!/bin/sh
+
+          set -e -f -u
+
+          make \
+            ARCH="amd64 arm64" \
+            CHANNEL="${CHANNEL}" \
+            CLIENT_DIR="${CLIENT_DIR}" \
+            FRONTEND_PREBUILT=1 \
+            OS="linux" \
+            SIGN=0 \
+            VERBOSE=1 \
+            VERSION="${APP_VERSION}" \
+            build-release \
+            ;
+
+      - name: Pack the release archives
+        run: |
+          #!/bin/sh
+
+          set -e -f -u
+
+          make \
+            CHANNEL="${CHANNEL}" \
+            SIGN=0 \
+            VERBOSE=1 \
+            VERSION="${APP_VERSION}" \
+            pack-release \
+            ;
+
+      - name: Upload the build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: AdGuardHome-linux
+          if-no-files-found: error
+          path: |
+            dist/AdGuardHome_linux_amd64.tar.gz
+            dist/AdGuardHome_linux_arm64.tar.gz
+
+      - name: Publish the release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/AdGuardHome_linux_amd64.tar.gz
+            dist/AdGuardHome_linux_arm64.tar.gz
+          generate_release_notes: true
