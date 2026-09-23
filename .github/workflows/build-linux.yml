@@ -143,6 +143,7 @@ jobs:
           make \
             CHANNEL="${CHANNEL}" \
             SIGN=0 \
+            SHELL=/bin/bash \
             VERBOSE=1 \
             VERSION="${APP_VERSION}" \
             pack-release \
@@ -155,6 +156,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
           path: |
+            dist/checksums.txt
             dist/AdGuardHome_linux_amd64.tar.gz
             dist/AdGuardHome_linux_arm64.tar.gz
 
@@ -163,6 +165,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
+            dist/checksums.txt
             dist/AdGuardHome_linux_amd64.tar.gz
             dist/AdGuardHome_linux_arm64.tar.gz
           generate_release_notes: true

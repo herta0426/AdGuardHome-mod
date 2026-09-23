@@ -13,9 +13,10 @@
       'target_repo': 'git@github.com:AdguardTeam/AdGuardHome.git'
       'team': 'go'
 'name': 'Mirror'
+# NOTE: Disabled by default in this fork.  The job calls a reusable workflow
+# from the private AdGuardSoftwareLimited/actions repository, which is not
+# available here, so every push would report a failed run.
 'on':
-  'push':
-    'branches': ['master']
   'workflow_dispatch': null
 # Permissions are disabled for all the jobs by default, and then overridden for
 # specific jobs if needed.  This is a recommended practice for security reasons,
