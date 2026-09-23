@@ -145,7 +145,6 @@ export type DashboardData = {
 export type SettingsData = {
     processing: boolean;
     processingTestUpstream: boolean;
-    processingDhcpStatus: boolean;
     settingsList?: {
         parental: {
             enabled: boolean;
@@ -240,69 +239,6 @@ export type AccessData = {
     blocked_hosts: string;
 };
 
-export type DhcpInterface = {
-    name: string;
-    flags: string;
-    gateway_ip: string;
-    ip_addresses: string[];
-    ipv4_addresses: string[];
-    ipv6_addresses: string[];
-    hardware_address: string;
-};
-
-export type DhcpData = {
-    processing: boolean;
-    processingStatus: boolean;
-    processingInterfaces: boolean;
-    processingDhcp: boolean;
-    processingConfig: boolean;
-    processingAdding: boolean;
-    processingDeleting: boolean;
-    processingUpdating: boolean;
-    enabled: boolean;
-    interface_name: string;
-    check?: {
-        v4?: {
-            other_server?: { found: string; error?: string };
-            static_ip?: { static: string; ip: string };
-        };
-        v6?: {
-            other_server?: { found: string; error?: string };
-            static_ip?: { static: string; ip: string };
-        };
-    };
-    v4: {
-        gateway_ip: string;
-        subnet_mask: string;
-        range_start: string;
-        range_end: string;
-        lease_duration: number;
-    };
-    v6: {
-        range_start: string;
-        lease_duration: number;
-    };
-    leases: {
-        hostname: string;
-        ip: string;
-        mac: string;
-    }[];
-    staticLeases: {
-        hostname: string;
-        ip: string;
-        mac: string;
-    }[];
-    isModalOpen: boolean;
-    leaseModalConfig?: {
-        hostname: string;
-        ip: string;
-        mac: string;
-    };
-    modalType: string;
-    dhcp_available: boolean;
-    interfaces?: DhcpInterface[];
-};
-
 export type DnsConfigData = {
     processingGetConfig: boolean;
     processingSetConfig: boolean;
@@ -389,7 +325,6 @@ export type RootState = {
     access?: AccessData;
     clients?: ClientsData;
     dashboard?: DashboardData;
-    dhcp?: DhcpData;
     dnsConfig?: DnsConfigData;
     encryption?: EncryptionData;
     filtering?: FilteringData;
@@ -461,36 +396,6 @@ export const initialState: RootState = {
         canAutoUpdate: false,
         language: '', // ???
         isUpdateAvailable: false,
-    },
-    dhcp: {
-        processing: true,
-        processingStatus: false,
-        processingInterfaces: false,
-        processingDhcp: false,
-        processingConfig: false,
-        processingAdding: false,
-        processingDeleting: false,
-        processingUpdating: false,
-        enabled: false,
-        interface_name: '',
-        check: null,
-        v4: {
-            gateway_ip: '',
-            subnet_mask: '',
-            range_start: '',
-            range_end: '',
-            lease_duration: 0,
-        },
-        v6: {
-            range_start: '',
-            lease_duration: 0,
-        },
-        leases: [],
-        staticLeases: [],
-        isModalOpen: false,
-        leaseModalConfig: undefined,
-        modalType: '',
-        dhcp_available: false,
     },
     dnsConfig: {
         processingGetConfig: false,
@@ -601,7 +506,6 @@ export const initialState: RootState = {
     settings: {
         processing: true,
         processingTestUpstream: false,
-        processingDhcpStatus: false,
     },
     stats: {
         processingGetConfig: false,

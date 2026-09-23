@@ -110,7 +110,6 @@ find_with_ignore() {
 		-o -path './data' \
 		-o -path './dist' \
 		-o -path './launchpad_credentials' \
-		-o -path './snapcraft_login' \
 		-o -name 'node_modules' \
 		-o -name 'test-reports' \
 		-o -name 'tmp' \

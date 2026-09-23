@@ -14,7 +14,6 @@
 *.db
 *.log
 *.out
-*.snap
 *.test
 /agh-backup/
 /bin/
@@ -23,18 +22,12 @@
 /client/playwright-report/
 /client/playwright/.cache/
 /client/test-results/
-/client_v2/blob-report/
-/client_v2/playwright-report/
-/client_v2/playwright/.cache/
-/client_v2/test-results/
 /data/
 /dist/
 /filtering/tests/filtering.TestLotsOfRules*.pprof
 /filtering/tests/top-1m.csv
 /internal/next/AdGuardHome.yaml
-/launchpad_credentials
 /querylog.json*
-/snapcraft_login
 /test-reports/
 AdGuardHome
 AdGuardHome.exe

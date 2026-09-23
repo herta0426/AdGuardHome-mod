@@ -16,7 +16,6 @@ import {
     DEFAULT_LANGUAGE,
     DEFAULT_TIME_FORMAT,
     DETAILED_DATE_FORMAT_OPTIONS,
-    DHCP_VALUES_PLACEHOLDERS,
     FILTERED,
     FILTERED_STATUS,
     R_CLIENT_ID,
@@ -27,7 +26,7 @@ import {
     THEMES,
 } from './constants';
 import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from './localStorageHelper';
-import { DhcpInterface, InstallInterface } from '../initialState';
+import { InstallInterface } from '../initialState';
 
 /**
  * @param time {string} The time to format
@@ -924,65 +923,6 @@ export const getRulesToFilterList = (
         </dl>
     );
 };
-
-/**
- * @param ip {string}
- * @param gateway_ip {string}
- * @returns {{range_end: string, subnet_mask: string, range_start: string,
- * lease_duration: string, gateway_ip: string}}
- */
-export const calculateDhcpPlaceholdersIpv4 = (ip: string, gateway_ip: string) => {
-    const LAST_OCTET_IDX = 3;
-    const LAST_OCTET_RANGE_START = 100;
-    const LAST_OCTET_RANGE_END = 200;
-
-    const addr = ipaddr.parse(ip) as IPv4;
-
-    addr.octets[LAST_OCTET_IDX] = LAST_OCTET_RANGE_START;
-    const range_start = addr.toString();
-
-    addr.octets[LAST_OCTET_IDX] = LAST_OCTET_RANGE_END;
-    const range_end = addr.toString();
-
-    const { subnet_mask, lease_duration } = DHCP_VALUES_PLACEHOLDERS.ipv4;
-
-    return {
-        gateway_ip: gateway_ip || ip,
-        subnet_mask,
-        range_start,
-        range_end,
-        lease_duration,
-    };
-};
-
-export const calculateDhcpPlaceholdersIpv6 = () => {
-    const { range_start, range_end, lease_duration } = DHCP_VALUES_PLACEHOLDERS.ipv6;
-
-    return {
-        range_start,
-        range_end,
-        lease_duration,
-    };
-};
-
-/**
- * Add ip_addresses property - concatenated ipv4_addresses and ipv6_addresses for every interface
- * @param interfaces
- * @param interfaces.ipv4_addresses {string[]}
- * @param interfaces.ipv6_addresses {string[]}
- * @returns interfaces Interfaces enriched with ip_addresses property
- */
-
-export const enrichWithConcatenatedIpAddresses = (interfaces: DhcpInterface[]) =>
-    Object.entries(interfaces)
-
-        .reduce((acc: any, [k, v]) => {
-            const ipv4_addresses = v.ipv4_addresses ?? [];
-            const ipv6_addresses = v.ipv6_addresses ?? [];
-
-            acc[k].ip_addresses = ipv4_addresses.concat(ipv6_addresses);
-            return acc;
-        }, interfaces);
 
 export const isScrolledIntoView = (el: any) => {
     const rect = el.getBoundingClientRect();

@@ -13,7 +13,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
-	nextagh "github.com/AdguardTeam/AdGuardHome/internal/next/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/rdns"
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
 	"github.com/AdguardTeam/golibs/testutil"
@@ -65,35 +64,6 @@ func (w *FSWatcher) Add(name string) (err error) {
 // Remove implements the [aghos.FSWatcher] interface for *FSWatcher.
 func (w *FSWatcher) Remove(name string) (err error) {
 	return w.OnRemove(name)
-}
-
-// ServiceWithConfig is a fake [nextagh.ServiceWithConfig] implementation for
-// tests.
-type ServiceWithConfig[ConfigType any] struct {
-	OnStart    func(ctx context.Context) (err error)
-	OnShutdown func(ctx context.Context) (err error)
-	OnConfig   func() (c ConfigType)
-}
-
-// type check
-var _ nextagh.ServiceWithConfig[struct{}] = (*ServiceWithConfig[struct{}])(nil)
-
-// Start implements the [nextagh.ServiceWithConfig] interface for
-// *ServiceWithConfig.
-func (s *ServiceWithConfig[_]) Start(ctx context.Context) (err error) {
-	return s.OnStart(ctx)
-}
-
-// Shutdown implements the [nextagh.ServiceWithConfig] interface for
-// *ServiceWithConfig.
-func (s *ServiceWithConfig[_]) Shutdown(ctx context.Context) (err error) {
-	return s.OnShutdown(ctx)
-}
-
-// Config implements the [nextagh.ServiceWithConfig] interface for
-// *ServiceWithConfig.
-func (s *ServiceWithConfig[ConfigType]) Config() (c ConfigType) {
-	return s.OnConfig()
 }
 
 // AddressProcessor is a fake [client.AddressProcessor] implementation for

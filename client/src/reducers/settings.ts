@@ -56,7 +56,6 @@ const settings = handleActions(
     {
         processing: true,
         processingTestUpstream: false,
-        processingDhcpStatus: false,
         settingsList: {},
     },
 );

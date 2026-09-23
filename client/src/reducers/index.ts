@@ -13,7 +13,6 @@ import dnsConfig from './dnsConfig';
 import filtering from './filtering';
 import settings from './settings';
 import dashboard from './dashboard';
-import dhcp from './dhcp';
 
 export default combineReducers({
     settings,
@@ -21,7 +20,6 @@ export default combineReducers({
     queryLogs,
     filtering,
     toasts,
-    dhcp,
     encryption,
     clients,
     access,
