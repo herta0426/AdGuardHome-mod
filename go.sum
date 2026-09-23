@@ -6,10 +6,6 @@ cloud.google.com/go/compute/metadata v0.9.0 h1:pDUj4QMoPejqq20dK0Pg2N4yG9zIkYGdB
 cloud.google.com/go/compute/metadata v0.9.0/go.mod h1:E0bWwX5wTnLPedCKqk3pJmVgCBSM6qQI1yTBdEb3C10=
 github.com/AdguardTeam/dnscrypt v0.0.2 h1:kIFCyjYofKHug7RwPGOjVga81P0/zOQdbUN+7p+I95M=
 github.com/AdguardTeam/dnscrypt v0.0.2/go.mod h1:qCFs51rLfNzEDZqb6nz1tocVLnEearJ1zng6O3I6ecA=
-github.com/AdguardTeam/dnsproxy v0.84.1 h1:Ge1UdyVNswKn0BKrV5qp+o/V0tF0N6wYcxaGYujDeEg=
-github.com/AdguardTeam/dnsproxy v0.84.1/go.mod h1:nZlktYebWcLO613q1j2N0bZ5BEnHPuqXAyW6O9vIhDU=
-github.com/AdguardTeam/dnsproxy v0.84.2-0.20260827044600-ec403a1b112c h1:1J0V6c4jwBefxhDmYY2fPGo/abUUDE9lpiPUdxJ7oUM=
-github.com/AdguardTeam/dnsproxy v0.84.2-0.20260827044600-ec403a1b112c/go.mod h1:nZlktYebWcLO613q1j2N0bZ5BEnHPuqXAyW6O9vIhDU=
 github.com/AdguardTeam/dnsproxy v0.84.2 h1:VlGPQhVEHPy2xgqet4r6iXHFCPZ8+BtTnRx/+nSs/wQ=
 github.com/AdguardTeam/dnsproxy v0.84.2/go.mod h1:6kCM5M/gtuQr/0BjtnReHlK6+N0BTee+WHOq3m1JNq4=
 github.com/AdguardTeam/golibs v0.35.15 h1:KjksvvzlQqxdNvrz+O3FgMbZKZAQdcoCkgBz0mR7wFQ=
@@ -135,8 +131,6 @@ github.com/mdlayher/netlink v1.11.2/go.mod h1:uT2Yc/QLaZubzDpZIBi9d4GoeLwtp3x1AM
 github.com/mdlayher/packet v1.0.0/go.mod h1:eE7/ctqDhoiRhQ44ko5JZU2zxB88g+JH/6jmnjzPjOU=
 github.com/mdlayher/packet v1.1.2 h1:3Up1NG6LZrsgDVn6X4L9Ge/iyRyxFEFD9o6Pr3Q1nQY=
 github.com/mdlayher/packet v1.1.2/go.mod h1:GEu1+n9sG5VtiRE4SydOmX5GTwyyYlteZiFU+x0kew4=
-github.com/mdlayher/raw v0.1.0 h1:K4PFMVy+AFsp0Zdlrts7yNhxc/uXoPVHi9RzRvtZF2Y=
-github.com/mdlayher/raw v0.1.0/go.mod h1:yXnxvs6c0XoF/aK52/H5PjsVHmWBCFfZUfoh/Y5s9Sg=
 github.com/mdlayher/socket v0.2.1/go.mod h1:QLlNPkFR88mRUNQIzRBMfXxwKal8H7u1h3bL1CV+f0E=
 github.com/mdlayher/socket v0.6.1 h1:M7uj2NtuujUY4mYr1C57NmfNiRHbkKpnBxO856lsc3A=
 github.com/mdlayher/socket v0.6.1/go.mod h1:+/SGtqc9V+5dAuRgQsU0fGBI+oRDiW7O2Obx10OIWfg=
