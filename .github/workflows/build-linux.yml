@@ -90,6 +90,16 @@ jobs:
       - name: Check the backend for the Linux architectures
         run: make go-deps go-os-check
 
+      - name: Print the module file diff
+        run: |
+          #!/bin/sh
+
+          set -e -f -u
+
+          go mod tidy
+          git --no-pager diff --stat go.mod go.sum
+          git --no-pager diff go.mod
+
       - name: Test the backend
         run: go test ./...
 
