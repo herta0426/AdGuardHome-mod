@@ -141,7 +141,9 @@ jobs:
           set -e -f -u
 
           make \
+            ARCH="amd64 arm64" \
             CHANNEL="${CHANNEL}" \
+            OS="linux" \
             SIGN=0 \
             SHELL=/bin/bash \
             VERBOSE=1 \
