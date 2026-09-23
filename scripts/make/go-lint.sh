@@ -225,7 +225,6 @@ run_linter "$go" tool gocognit --over='10' \
 	./internal/filtering/ \
 	./internal/home/ \
 	./internal/ipset \
-	./internal/next/ \
 	./internal/ossvc/ \
 	./internal/permcheck/ \
 	./internal/querylog/ \
@@ -276,7 +275,6 @@ run_linter "$go" tool fieldalignment \
 	./internal/filtering/rulelist/ \
 	./internal/filtering/safesearch/ \
 	./internal/ipset/ \
-	./internal/next/... \
 	./internal/ossvc/ \
 	./internal/querylog/ \
 	./internal/rdns/ \
@@ -310,7 +308,6 @@ run_linter "$go" tool gosec --exclude=G115 --fmt=golint --quiet \
 	./internal/filtering/rulelist/ \
 	./internal/filtering/safesearch/ \
 	./internal/ipset/ \
-	./internal/next/ \
 	./internal/ossvc/ \
 	./internal/rdns/ \
 	./internal/schedule/ \

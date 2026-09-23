@@ -1,1 +1,0 @@
-export { IgnoredDomainsModal } from './IgnoredDomainsModal';

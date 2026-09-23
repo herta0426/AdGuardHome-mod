@@ -192,15 +192,6 @@ const getTabs = ({ tlsAddress, httpsAddress, showDnsPrivacyNotice, serverName, p
             'install_devices_router_list_2',
             'install_devices_router_list_3',
 
-            // eslint-disable-next-line react/jsx-key
-            <Trans
-                components={[
-                    <a href="#dhcp" key="0">
-                        link
-                    </a>,
-                ]}>
-                install_devices_router_list_4
-            </Trans>,
         ],
     },
     Windows: {

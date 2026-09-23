@@ -25,14 +25,10 @@ run_linter -e "$go" tool shfmt --binary-next-line -d -p -s \
 	./scripts/hooks/* \
 	./scripts/install.sh \
 	./scripts/make/*.sh \
-	./scripts/snap/*.sh \
-	./snap/local/*.sh \
 	;
 
 shellcheck -e 'SC2250,SC2310,SC3040' -f 'gcc' -o 'all' -x -- \
 	./scripts/hooks/* \
 	./scripts/install.sh \
 	./scripts/make/*.sh \
-	./scripts/snap/*.sh \
-	./snap/local/*.sh \
 	;
