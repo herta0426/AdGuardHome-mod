@@ -33,12 +33,11 @@ const (
 	// FilteredInvalid: the request was invalid and was not processed.
 	FilteredInvalid
 
-	// FilteredSafeSearch: the host was replaced with safesearch variant.
-	FilteredSafeSearch
-
-	// FilteredBlockedService: the host is blocked by the blocked services
-	// feature.
-	FilteredBlockedService
+	// The values 7 and 8 are reserved.  They were used by the removed safe
+	// search and blocked services filters and are kept as placeholders to
+	// preserve the numbering of the reasons stored in the query log.
+	_ // FilteredSafeSearch
+	_ // FilteredBlockedService
 
 	// Rewritten is returned when there was a rewrite by a legacy DNS rewrite
 	// rule.
@@ -69,8 +68,6 @@ var reasonNames = []string{
 	FilteredSafeBrowsing:   "FilteredSafeBrowsing",
 	FilteredParental:       "FilteredParental",
 	FilteredInvalid:        "FilteredInvalid",
-	FilteredSafeSearch:     "FilteredSafeSearch",
-	FilteredBlockedService: "FilteredBlockedService",
 
 	Rewritten:          "Rewrite",
 	RewrittenAutoHosts: "RewriteEtcHosts",
@@ -80,6 +77,11 @@ var reasonNames = []string{
 // ReasonByName maps reason string names to their values.
 var ReasonByName = maps.Collect(func(yield func(string, Reason) (ok bool)) {
 	for i, name := range reasonNames {
+		if name == "" {
+			// Skip the reserved values.
+			continue
+		}
+
 		if !yield(name, Reason(i)) {
 			break
 		}

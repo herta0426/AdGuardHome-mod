@@ -42,7 +42,6 @@ func addTestEntry(l *queryLog, host string, answerStr, client net.IP, reason fil
 	}
 
 	res := filtering.Result{
-		ServiceName: "SomeService",
 		Rules: []*filtering.ResultRule{{
 			FilterListID: 1,
 			Text:         "SomeRule",

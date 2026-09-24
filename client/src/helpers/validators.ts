@@ -12,7 +12,6 @@ import {
     STANDARD_WEB_PORT,
     UNSAFE_PORTS,
     R_CLIENT_ID,
-    R_DOMAIN,
     MAX_PASSWORD_LENGTH,
     MIN_PASSWORD_LENGTH,
     R_IPV4_SUBNET,
@@ -188,21 +187,6 @@ export const validateConfigClientId = (value: any) => {
  * @param value {string}
  * @returns {undefined|string}
  */
-export const validateServerName = (value: any) => {
-    if (!value) {
-        return undefined;
-    }
-    const formattedValue = value ? value.trim() : value;
-    if (formattedValue && !R_DOMAIN.test(formattedValue)) {
-        return i18next.t('form_error_server_name');
-    }
-    return undefined;
-};
-
-/**
- * @param value {string}
- * @returns {undefined|string}
- */
 export const validateIpv6 = (value: any) => {
     if (value && !R_IPV6.test(value)) {
         return i18next.t('form_error_ip6_format');
@@ -253,26 +237,6 @@ export const validateInstallPort = (value: any) => {
     }
     return undefined;
 };
-
-/**
- * @param value {number}
- * @returns {undefined|string}
- */
-export const validatePortTLS = (value: any) => {
-    if (value === 0) {
-        return undefined;
-    }
-    if (value && (value < STANDARD_WEB_PORT || value > MAX_PORT)) {
-        return i18next.t('form_error_port_range');
-    }
-    return undefined;
-};
-
-/**
- * @param value {number}
- * @returns {undefined|string}
- */
-export const validatePortQuic = validatePortTLS;
 
 /**
  * @param value {number}
@@ -389,20 +353,5 @@ export const validateIPv6Subnet = (value: any) => {
     if (!R_IPV6_SUBNET.test(value)) {
         return i18next.t('rate_limit_subnet_len_ipv6_error');
     }
-    return undefined;
-};
-
-/**
- * @returns {undefined|string}
- * @param value
- * @param allValues
- */
-export const validatePlainDns = (value: any, allValues: any) => {
-    const { enabled } = allValues;
-
-    if (!enabled && !value) {
-        return i18next.t('encryption_plain_dns_error');
-    }
-
     return undefined;
 };

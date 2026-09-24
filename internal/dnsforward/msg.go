@@ -77,11 +77,6 @@ func (s *Server) genDNSFilterMessage(
 		return s.genBlockedHost(ctx, l, req, s.dnsFilter.SafeBrowsingBlockHost(), dctx)
 	case filtering.FilteredParental:
 		return s.genBlockedHost(ctx, l, req, s.dnsFilter.ParentalBlockHost(), dctx)
-	case filtering.FilteredSafeSearch:
-		// If Safe Search generated the necessary IP addresses, use them.
-		// Otherwise, if there were no errors, there are no addresses for the
-		// requested IP version, so produce a NODATA response.
-		return s.getCNAMEWithIPs(ctx, req, ipsFromRules(res.Rules), res.CanonName)
 	default:
 		return s.genForBlockingMode(ctx, req, ipsFromRules(res.Rules))
 	}

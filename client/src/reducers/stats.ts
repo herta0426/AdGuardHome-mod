@@ -17,7 +17,6 @@ const defaultStats = {
     numDnsQueries: 0,
     numReplacedParental: 0,
     numReplacedSafebrowsing: 0,
-    numReplacedSafesearch: 0,
     avgProcessingTime: 0,
     timeUnits: TIME_UNITS.HOURS,
 };
@@ -76,7 +75,6 @@ const stats = handleActions(
                 num_dns_queries: numDnsQueries,
                 num_replaced_parental: numReplacedParental,
                 num_replaced_safebrowsing: numReplacedSafebrowsing,
-                num_replaced_safesearch: numReplacedSafesearch,
                 avg_processing_time: avgProcessingTime,
                 top_upstreams_responses: topUpstreamsResponses,
                 top_upstrems_avg_time: topUpstreamsAvgTime,
@@ -98,7 +96,6 @@ const stats = handleActions(
                 numDnsQueries,
                 numReplacedParental,
                 numReplacedSafebrowsing,
-                numReplacedSafesearch,
                 avgProcessingTime,
                 topUpstreamsResponses,
                 topUpstreamsAvgTime,

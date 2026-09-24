@@ -43,66 +43,16 @@ export type InstallData = {
     dnsVersion: string;
 };
 
-export type EncryptionData = {
-    processing: boolean;
-    processingConfig: boolean;
-    processingValidate: boolean;
-    enabled: boolean;
-    serve_plain_dns: boolean;
-    dns_names: any;
-    force_https: boolean;
-    issuer: string;
-    key_type: string;
-    not_after: string;
-    not_before: string;
-    port_dns_over_tls?: number;
-    port_dns_over_quic?: number;
-    port_https?: number;
-    port_dnscrypt?: number;
-    subject: string;
-    valid_chain: boolean;
-    valid_key: boolean;
-    valid_cert: boolean;
-    valid_pair: boolean;
-    status_cert: string;
-    status_key: string;
-    private_key: string;
-    server_name: string;
-    warning_validation: string;
-    certificate_chain: string;
-    certificate_path: string;
-    private_key_path: string;
-    private_key_saved: boolean;
-    allow_unencrypted_doh?: boolean;
-    dnscrypt_config_file?: string;
-};
-
 export type Client = {
-    blocked_services: string[];
-    blocked_services_schedule: {
-        sun?: { start: number; end: number };
-        mon?: { start: number; end: number };
-        tue?: { start: number; end: number };
-        wed?: { start: number; end: number };
-        thu?: { start: number; end: number };
-        fri?: { start: number; end: number };
-        sat?: { start: number; end: number };
-        time_zone: string;
-    };
     filtering_enabled: boolean;
     ids: string[];
     ignore_querylog: boolean;
     ignore_statistics: boolean;
     name: string;
-    parental_enabled: boolean;
-    safe_search: Record<string, boolean>;
-    safebrowsing_enabled: boolean;
-    safesearch_enabled: boolean;
     tags: string[];
     upstreams: string[];
     upstreams_cache_enabled: boolean;
     upstreams_cache_size: number;
-    use_global_blocked_services: boolean;
     use_global_settings: boolean;
 };
 
@@ -158,7 +108,6 @@ export type SettingsData = {
             subtitle: string;
             title: string;
         };
-        safesearch: Record<string, boolean>;
     };
 };
 
@@ -213,20 +162,11 @@ export type StatsData = {
     numDnsQueries: number;
     numReplacedParental: number;
     numReplacedSafebrowsing: number;
-    numReplacedSafesearch: number;
     avgProcessingTime: number;
     timeUnits: string;
     enabled: boolean;
     topUpstreamsAvgTime: { name: string; count: number }[];
     topUpstreamsResponses: { name: string; count: number }[];
-};
-
-export type AccessData = {
-    processing: boolean;
-    processingSet: boolean;
-    allowed_clients: string;
-    disallowed_clients: string;
-    blocked_hosts: string;
 };
 
 export type DnsConfigData = {
@@ -302,24 +242,12 @@ export type QueryLogsData = {
     ignored_enabled: boolean;
 };
 
-export type ServicesData = {
-    processing: boolean;
-    processingAll: boolean;
-    processingSet: boolean;
-    list: any;
-    allServices: any[];
-    allGroups: any[];
-};
-
 export type RootState = {
-    access?: AccessData;
     dashboard?: DashboardData;
     dnsConfig?: DnsConfigData;
-    encryption?: EncryptionData;
     filtering?: FilteringData;
     queryLogs?: QueryLogsData;
     rewrites?: RewritesData;
-    services?: ServicesData;
     settings?: SettingsData;
     stats?: StatsData;
     install?: InstallData;
@@ -342,13 +270,6 @@ export type LoginState = {
 };
 
 export const initialState: RootState = {
-    access: {
-        processing: true,
-        processingSet: false,
-        allowed_clients: '',
-        disallowed_clients: '',
-        blocked_hosts: '',
-    },
     dashboard: {
         processing: true,
         isCoreRunning: true,
@@ -400,33 +321,6 @@ export const initialState: RootState = {
         use_private_ptr_resolvers: false,
         default_local_ptr_upstreams: [],
     },
-    encryption: {
-        processing: true,
-        processingConfig: false,
-        processingValidate: false,
-        enabled: false,
-        serve_plain_dns: false,
-        dns_names: null,
-        force_https: false,
-        issuer: '',
-        key_type: '',
-        not_after: '',
-        not_before: '',
-        subject: '',
-        valid_chain: false,
-        valid_key: false,
-        valid_cert: false,
-        valid_pair: false,
-        status_cert: '',
-        status_key: '',
-        certificate_chain: '',
-        private_key: '',
-        server_name: '',
-        warning_validation: '',
-        certificate_path: '',
-        private_key_path: '',
-        private_key_saved: false,
-    },
     filtering: {
         isModalOpen: false,
         processingFilters: false,
@@ -475,14 +369,6 @@ export const initialState: RootState = {
         list: [],
         settings: { enabled: false },
     },
-    services: {
-        processing: true,
-        processingAll: true,
-        processingSet: false,
-        list: {},
-        allServices: [],
-        allGroups: [],
-    },
     settings: {
         processing: true,
         processingTestUpstream: false,
@@ -506,7 +392,6 @@ export const initialState: RootState = {
         numDnsQueries: 0,
         numReplacedParental: 0,
         numReplacedSafebrowsing: 0,
-        numReplacedSafesearch: 0,
         avgProcessingTime: 0,
         timeUnits: TIME_UNITS.HOURS,
         enabled: true,

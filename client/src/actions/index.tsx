@@ -22,7 +22,6 @@ import {
 } from '../helpers/constants';
 import { areEqualVersions } from '../helpers/version';
 import { fetchRequest } from '../api/fetch';
-import { getTlsStatus } from './encryption';
 import apiClient from '../api/Api';
 import { addErrorToast, addNoticeToast, addSuccessToast } from './toasts';
 import { getFilteringStatus, setRules } from './filtering';
@@ -33,7 +32,7 @@ export const showSettingsFailure = createAction('SETTINGS_FAILURE_SHOW');
 /**
  *
  * @param {*} settingKey = SETTINGS_NAMES
- * @param {*} status: boolean | SafeSearchConfig
+ * @param {*} status: boolean
  * @returns
  */
 export const toggleSetting = (settingKey: any, status: any) => async (dispatch: any) => {
@@ -60,11 +59,6 @@ export const toggleSetting = (settingKey: any, status: any) => async (dispatch: 
                 }
                 dispatch(toggleSettingStatus({ settingKey }));
                 break;
-            case SETTINGS_NAMES.safesearch:
-                successMessage = 'updated_save_search_toast';
-                await apiClient.updateSafesearch(status);
-                dispatch(toggleSettingStatus({ settingKey, value: status }));
-                break;
             default:
                 break;
         }
@@ -83,16 +77,12 @@ export const initSettings = () => async (dispatch: any) => {
         try {
             const safebrowsingStatus = await apiClient.getSafebrowsingStatus();
             const parentalStatus = await apiClient.getParentalStatus();
-            const safesearchStatus = await apiClient.getSafesearchStatus();
             const newSettingsList = {
                 safebrowsing: {
                     enabled: safebrowsingStatus.enabled,
                 },
                 parental: {
                     enabled: parentalStatus.enabled,
-                },
-                safesearch: {
-                    ...safesearchStatus,
                 },
             };
             dispatch(initSettingsSuccess({ settingsList: newSettingsList }));
@@ -309,7 +299,6 @@ export const getDnsStatus = () => async (dispatch: any) => {
         if (runningStatus === true) {
             dispatch(dnsStatusSuccess(dnsStatus));
             dispatch(getVersion());
-            dispatch(getTlsStatus());
             dispatch(getProfile());
         } else {
             dispatch(setDnsRunningStatus(running));
@@ -495,15 +484,3 @@ export const toggleBlocking =
 
         dispatch(getFilteringStatus());
     };
-
-export const toggleBlockingForClient = (type: any, domain: any, client: any) => {
-    const escapedClientName = client
-        .replace(/'/g, "\\'")
-        .replace(/"/g, '\\"')
-        .replace(/,/g, '\\,')
-        .replace(/\|/g, '\\|');
-    const baseRule = `||${domain}^$client='${escapedClientName}'`;
-    const baseUnblocking = `@@${baseRule}`;
-
-    return toggleBlocking(type, domain, baseRule, baseUnblocking);
-};

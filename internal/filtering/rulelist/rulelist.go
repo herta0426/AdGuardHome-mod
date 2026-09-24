@@ -6,7 +6,6 @@ package rulelist
 
 import (
 	"fmt"
-	"math"
 
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/c2h5oh/datasize"
@@ -33,23 +32,18 @@ type APIID int64
 const (
 	APIIDCustom          APIID = 0
 	APIIDEtcHosts        APIID = -1
-	APIIDBlockedService  APIID = -2
 	APIIDParentalControl APIID = -3
 	APIIDSafeBrowsing    APIID = -4
-	APIIDSafeSearch      APIID = -5
 )
 
-// The IDs of built-in filter lists.  The IDs for the blocked-service and the
-// safe-search filters are chosen so that they equal to their [APIID]
-// counterparts when converted to it.
+// The IDs of built-in filter lists.  The IDs are chosen so that they equal to
+// their [APIID] counterparts when converted to it.
 //
 // NOTE:  Keep in sync with [APIIDCustom] etc.
 //
 // TODO(d.kolyshev): Add URLFilterIDLegacyRewrite here and to the UI.
 const (
-	IDCustom         rules.ListID = rules.ListID(APIIDCustom)
-	IDBlockedService rules.ListID = math.MaxUint64 - rules.ListID(-APIIDBlockedService) + 1
-	IDSafeSearch     rules.ListID = math.MaxUint64 - rules.ListID(-APIIDSafeSearch) + 1
+	IDCustom rules.ListID = rules.ListID(APIIDCustom)
 )
 
 // UID is the type for the unique IDs of filtering-rule lists.

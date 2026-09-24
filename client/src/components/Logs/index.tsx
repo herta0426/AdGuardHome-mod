@@ -19,8 +19,6 @@ import { getFilteringStatus } from '../../actions/filtering';
 
 import { getClients } from '../../actions';
 import { getDnsConfig } from '../../actions/dnsConfig';
-import { getAccessList } from '../../actions/access';
-import { getAllBlockedServices } from '../../actions/services';
 import { getLogsConfig, resetFilteredLogs, setFilteredLogs, toggleDetailedLogs } from '../../actions/queryLogs';
 
 import InfiniteTable from './InfiniteTable';
@@ -151,9 +149,8 @@ const Logs = () => {
             setIsLoading(true);
             dispatch(getFilteringStatus());
             dispatch(getClients());
-            dispatch(getAllBlockedServices());
             try {
-                await Promise.all([dispatch(getLogsConfig()), dispatch(getDnsConfig()), dispatch(getAccessList())]);
+                await Promise.all([dispatch(getLogsConfig()), dispatch(getDnsConfig())]);
             } catch (err) {
                 console.error(err);
             } finally {

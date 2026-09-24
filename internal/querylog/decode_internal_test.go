@@ -52,7 +52,6 @@ func TestQueryLog_DecodeLogEntry_success(t *testing.T) {
 		`"Rules":[{"FilterListID":42,"Text":"||an.yandex.ru","IP":"127.0.0.2"},` +
 		`{"FilterListID":43,"Text":"||an2.yandex.ru","IP":"127.0.0.3"}],` +
 		`"CanonName":"example.com",` +
-		`"ServiceName":"example.org",` +
 		`"DNSRewriteResult":{"RCode":0,"Response":{"1":["127.0.0.2"]}}},` +
 		`"Upstream":"https://some.upstream",` +
 		`"Elapsed":837429}`
@@ -68,7 +67,6 @@ func TestQueryLog_DecodeLogEntry_success(t *testing.T) {
 			},
 		},
 		CanonName:   "example.com",
-		ServiceName: "example.org",
 		IPList:      []netip.Addr{netip.AddrFrom4([4]byte{127, 0, 0, 2})},
 		Rules: []*filtering.ResultRule{{
 			FilterListID: 42,

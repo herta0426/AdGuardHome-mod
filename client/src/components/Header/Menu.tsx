@@ -39,10 +39,6 @@ const SETTINGS_ITEMS = [
         route: SETTINGS_URLS.dns,
         text: 'dns_settings',
     },
-    {
-        route: SETTINGS_URLS.encryption,
-        text: 'encryption_settings',
-    },
 ];
 
 const FILTERS_ITEMS = [

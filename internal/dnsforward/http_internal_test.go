@@ -72,8 +72,6 @@ func TestDNSForwardHTTP_handleGetConfig(t *testing.T) {
 		BlockedResponseTTL:    testBlockedRespTTL,
 		SafeBrowsingEnabled:   true,
 		SafeBrowsingCacheSize: 1000,
-		SafeSearchConf:        filtering.SafeSearchConfig{Enabled: true},
-		SafeSearchCacheSize:   1000,
 		ParentalCacheSize:     1000,
 		CacheTime:             30,
 	}
@@ -158,8 +156,6 @@ func TestDNSForwardHTTP_handleSetConfig(t *testing.T) {
 		BlockedResponseTTL:    testBlockedRespTTL,
 		SafeBrowsingEnabled:   true,
 		SafeBrowsingCacheSize: 1000,
-		SafeSearchConf:        filtering.SafeSearchConfig{Enabled: true},
-		SafeSearchCacheSize:   1000,
 		ParentalCacheSize:     1000,
 		CacheTime:             30,
 	}

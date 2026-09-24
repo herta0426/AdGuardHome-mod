@@ -888,8 +888,6 @@ Notes:
 
 * If `use_global_settings` is false, then the client-specific settings are used to override (enable or disable) global settings.
 
-* If `use_global_blocked_services` is false, then the client-specific settings are used to override (enable or disable) global Blocked Services settings.
-
 
 ### Get list of clients
 
@@ -911,9 +909,6 @@ Response:
 			filtering_enabled: false
 			parental_enabled: false
 			safebrowsing_enabled: false
-			safesearch_enabled: false
-			use_global_blocked_services: true
-			blocked_services: [ "name1", ... ]
 			whois_info: {
 				key: "value"
 				...
@@ -952,9 +947,6 @@ Request:
 		filtering_enabled: false
 		parental_enabled: false
 		safebrowsing_enabled: false
-		safesearch_enabled: false
-		use_global_blocked_services: true
-		blocked_services: [ "name1", ... ]
 		upstreams: ["upstream1", ...]
 	}
 
@@ -983,9 +975,6 @@ Request:
 			filtering_enabled: false
 			parental_enabled: false
 			safebrowsing_enabled: false
-			safesearch_enabled: false
-			use_global_blocked_services: true
-			blocked_services: [ "name1", ... ]
 			upstreams: ["upstream1", ...]
 		}
 	}
@@ -1040,9 +1029,6 @@ Response:
 			filtering_enabled: false
 			parental_enabled: false
 			safebrowsing_enabled: false
-			safesearch_enabled: false
-			use_global_blocked_services: true
-			blocked_services: [ "name1", ... ]
 			whois_info: {
 				key: "value"
 				...
@@ -1335,65 +1321,6 @@ Response:
 	200 OK
 
 
-## Services Filter
-
-Allows to quickly block popular sites globally or for specific client only.
-UI manages these settings via global or per-client API.
-UI and server have the same list of the services supported and this list must always be in synchronization.
-UI code also contains icons for each service: `client/src/components/ui/Icons.js`.
-
-How it works:
-* UI presents the list of services which user may want to block
-* Admin clicks on the checkboxes in front of the services to block and presses Save
-* UI sends `Set blocked services list` or `Update client` message
-* Server updates the internal configuration
-* When a user sends a DNS request for a host which is blocked by these settings, he won't receive its IP address
-* Query log will show that this request was blocked by "Blocked services"
-
-Internally, all supported services are stored as a map:
-
-	service name -> list of rules
-
-
-### API: Get blocked services list of available services
-
-Request:
-
-	GET /control/blocked_services/services
-
-Response:
-
-	200 OK
-
-	[ "name1", ... ]
-
-
-### API: Get blocked services list
-
-Request:
-
-	GET /control/blocked_services/list
-
-Response:
-
-	200 OK
-
-	[ "name1", ... ]
-
-
-### API: Set blocked services list
-
-Request:
-
-	POST /control/blocked_services/set
-
-	[ "name1", ... ]
-
-Response:
-
-	200 OK
-
-
 ## Statistics
 
 Load (main thread):
@@ -1436,7 +1363,6 @@ Response:
 		num_dns_queries: 123
 		num_blocked_filtering: 123
 		num_replaced_safebrowsing: 123
-		num_replaced_safesearch: 123
 		num_replaced_parental: 123
 		avg_processing_time: 123.123
 
@@ -1568,13 +1494,11 @@ Strict matching can be enabled by enclosing the value in double quotes: e.g. `"a
 `response_status`:
 * all
 * filtered             - all kinds of filtering
-* blocked              - blocked or blocked services
-* blocked_services     - blocked services
+* blocked              - blocked
 * blocked_safebrowsing - blocked by safebrowsing
 * blocked_parental     - blocked by parental control
 * whitelisted          - whitelisted
 * rewritten            - all kinds of rewrites
-* safe_search          - enforced safe search
 * processed            - not blocked, not white-listed entries
 
 Response:
@@ -1611,7 +1535,6 @@ Response:
 		},
 		"reason":"FilteredBlackList",
 		"rule":"||doubleclick.net^",
-		"service_name": "...", // set if reason=FilteredBlockedService
 		"status":"NOERROR",
 		"time":"2006-01-02T15:04:05.999999999Z07:00"
 	}
@@ -1641,6 +1564,7 @@ Response:
 	200 OK
 
 `anonymize_client_ip`:
+
 1. New log entries written to a log file will contain modified client IP addresses.  Note that there's no way to obtain the full IP address later for these entries.
 2. `GET /control/querylog` response data will contain modified client IP addresses (masked /24 or /112).
 3. Searching by client IP won't work for the previously stored entries.
@@ -1680,8 +1604,6 @@ This is how DNS requests and responses are filtered by AGH:
 	* process /etc/hosts entries.
 		Can set a list of IP addresses or a hostname (for PTR requests).
 	* match host name against filtering lists
-	* match host name against blocked services rules
-	* process SafeSearch rules
 	* request SafeBrowsing & ParentalControl services and process their response
 * If the handlers above create a successful result that can be immediately sent to a client, it's passed back to 'dnsproxy' module
 * Otherwise, AGH passes the DNS request to an upstream server via 'dnsproxy' module
@@ -1852,8 +1774,6 @@ Response:
 			"filter_list_id":42,
 			"text":"||doubleclick.net^",
 		},
-		// If we have "reason":"FilteredBlockedService".
-		"service_name": "...",
 		// If we have "reason":"Rewrite".
 		"cname": "...",
 		"ip_addrs": ["1.2.3.4", ...]

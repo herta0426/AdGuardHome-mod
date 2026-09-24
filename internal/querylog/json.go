@@ -87,10 +87,6 @@ func (l *queryLog) entryToJSON(
 		}
 	}
 
-	if len(entry.Result.ServiceName) != 0 {
-		jsonEntry["service_name"] = entry.Result.ServiceName
-	}
-
 	l.setMsgData(ctx, entry, jsonEntry)
 	l.setOrigAns(ctx, entry, jsonEntry)
 

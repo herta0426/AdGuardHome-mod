@@ -36,13 +36,11 @@ const (
 	filteringStatusAll      = "all"
 	filteringStatusFiltered = "filtered" // all kinds of filtering
 
-	filteringStatusBlocked             = "blocked"              // blocked or blocked services
-	filteringStatusBlockedService      = "blocked_services"     // blocked
+	filteringStatusBlocked             = "blocked"              // blocked
 	filteringStatusBlockedSafebrowsing = "blocked_safebrowsing" // blocked by safebrowsing
 	filteringStatusBlockedParental     = "blocked_parental"     // blocked by parental control
 	filteringStatusWhitelisted         = "whitelisted"          // whitelisted
 	filteringStatusRewritten           = "rewritten"            // all kinds of rewrites
-	filteringStatusSafeSearch          = "safe_search"          // enforced safe search
 	filteringStatusProcessed           = "processed"            // not blocked, not white-listed entries
 )
 
@@ -52,11 +50,9 @@ var filteringStatusValues = container.NewMapSet(
 	filteringStatusBlocked,
 	filteringStatusBlockedParental,
 	filteringStatusBlockedSafebrowsing,
-	filteringStatusBlockedService,
 	filteringStatusFiltered,
 	filteringStatusProcessed,
 	filteringStatusRewritten,
-	filteringStatusSafeSearch,
 	filteringStatusWhitelisted,
 )
 
@@ -68,8 +64,6 @@ var reasonCodes = [...]string{
 	filtering.FilteredSafeBrowsing:   "4",
 	filtering.FilteredParental:       "5",
 	filtering.FilteredInvalid:        "6",
-	filtering.FilteredSafeSearch:     "7",
-	filtering.FilteredBlockedService: "8",
 	filtering.Rewritten:              "9",
 	filtering.RewrittenAutoHosts:     "10",
 	filtering.RewrittenRule:          "11",
@@ -226,9 +220,7 @@ func (c *searchCriterion) ctFilteringStatusCase(
 	case
 		filteringStatusBlocked,
 		filteringStatusBlockedParental,
-		filteringStatusBlockedSafebrowsing,
-		filteringStatusBlockedService,
-		filteringStatusSafeSearch:
+		filteringStatusBlockedSafebrowsing:
 		return isFiltered && c.isFilteredWithReason(reason)
 	case filteringStatusWhitelisted:
 		return reason == filtering.NotFilteredAllowList
@@ -257,28 +249,15 @@ func reasonIsRewrite(r filtering.Reason) (ok bool) {
 //
 //   - [filteringStatusBlockedParental]
 //   - [filteringStatusBlockedSafebrowsing]
-//   - [filteringStatusBlockedService]
 //   - [filteringStatusBlocked]
-//   - [filteringStatusSafeSearch]
 func (c *searchCriterion) isFilteredWithReason(reason filtering.Reason) (matched bool) {
 	switch c.value {
 	case filteringStatusBlocked:
-		switch reason {
-		case
-			filtering.FilteredBlockList,
-			filtering.FilteredBlockedService:
-			return true
-		default:
-			return false
-		}
+		return reason == filtering.FilteredBlockList
 	case filteringStatusBlockedParental:
 		return reason == filtering.FilteredParental
 	case filteringStatusBlockedSafebrowsing:
 		return reason == filtering.FilteredSafeBrowsing
-	case filteringStatusBlockedService:
-		return reason == filtering.FilteredBlockedService
-	case filteringStatusSafeSearch:
-		return reason == filtering.FilteredSafeSearch
 	default:
 		panic(fmt.Errorf("%w: %q", errors.ErrBadEnumValue, c.value))
 	}
@@ -287,10 +266,8 @@ func (c *searchCriterion) isFilteredWithReason(reason filtering.Reason) (matched
 // reasonIsRuleList returns true if r is one of:
 //
 //   - [filtering.FilteredBlockList]
-//   - [filtering.FilteredBlockedService]
 //   - [filtering.NotFilteredAllowList]
 func reasonIsRuleList(r filtering.Reason) (ok bool) {
 	return r == filtering.FilteredBlockList ||
-		r == filtering.FilteredBlockedService ||
 		r == filtering.NotFilteredAllowList
 }

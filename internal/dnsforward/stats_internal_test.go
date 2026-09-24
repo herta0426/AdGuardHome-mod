@@ -162,17 +162,6 @@ func TestServer_ProcessQueryLogsAndStats(t *testing.T) {
 		reason:         filtering.FilteredSafeBrowsing,
 		wantStatResult: stats.RSafeBrowsing,
 	}, {
-		name:           "success_udp_ss",
-		domain:         domain,
-		proto:          proxy.ProtoUDP,
-		addr:           testClientAddrPort,
-		clientID:       "",
-		wantLogProto:   "",
-		wantStatClient: "1.2.3.4",
-		wantCode:       resultCodeSuccess,
-		reason:         filtering.FilteredSafeSearch,
-		wantStatResult: stats.RSafeSearch,
-	}, {
 		name:           "success_udp_pc",
 		domain:         domain,
 		proto:          proxy.ProtoUDP,
