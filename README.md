@@ -1,83 +1,121 @@
-# AdGuard Home Mod
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/AdguardTeam/AdGuardHome/raw/master/doc/adguard_home_darkmode.svg">
+    <img alt="AdGuard Home" src="https://github.com/AdguardTeam/AdGuardHome/raw/master/doc/adguard_home_lightmode.svg" width="300px">
+  </picture>
+</p>
 
-[简体中文](README.zh-CN.md)
+<h3 align="center">AdGuard Home 精简版</h3>
 
-A trimmed-down, Linux-only build of [AdGuard Home] with a simplified admin
-UI.  The DNS server, filtering, the query log, client management, encryption,
-and the REST API are the same as upstream.
+<p align="center">全网去广告与反跟踪的 DNS 服务器，为 Magisk 模块精简与适配。</p>
 
-> This is an **unofficial mod**.  It is not affiliated with, endorsed by, or
-> supported by AdGuard Software Ltd.  Report problems with the mod in this
-> repository, and problems with AdGuard Home itself upstream.
+<p align="center">简体中文 / <a href="README.en.md">English</a></p>
+
+<p align="center">
+  <a href="https://github.com/liuzq2002/AdguardHome-Mod/releases"><img src="https://img.shields.io/github/v/release/liuzq2002/AdguardHome-Mod" alt="最新版本"/></a>
+  <a href="https://github.com/liuzq2002/AdguardHome-Mod/actions/workflows/build-linux.yml"><img src="https://github.com/liuzq2002/AdguardHome-Mod/actions/workflows/build-linux.yml/badge.svg" alt="构建状态"/></a>
+  <a href="LICENSE.txt"><img src="https://img.shields.io/badge/license-GPL--3.0-blue.svg" alt="许可证"/></a>
+</p>
+
+<hr/>
+
+[AdGuard Home] 是一个全网拦截广告和跟踪的 DNS 服务器。部署好之后，它覆盖家里的所有设备，任何设备都不需要再装客户端软件：它把跟踪域名解析到"黑洞"地址，让设备连不上那些服务器。它和 AdGuard 公共 [AdGuard DNS] 服务使用同一套代码。
+
+本仓库是 AdGuard Home 的**非官方精简版**，主要为 [Adguard-Home-For-Magisk-Mod] 适配。那个项目把 AdGuard Home 打包成 Magisk 模块装进 Android，内存和存储都很紧张，所以这个版本把用不到的功能整个删掉了，只保留 DNS 服务与基本的管理能力。
 
 [AdGuard Home]: https://github.com/AdguardTeam/AdGuardHome
+[AdGuard DNS]: https://adguard-dns.io/
+[Adguard-Home-For-Magisk-Mod]: https://github.com/liuzq2002/Adguard-Home-For-Magisk-Mod
 
-## What is changed
+> **非官方声明**：本项目与 AdGuard Software Ltd. 没有隶属关系，也不由官方提供支持。本项目的 mod 相关问题请在本仓库反馈，AdGuard Home 本身的问题请反馈到上游。
 
-The admin UI is smaller than upstream:
+- [这个项目做了什么](#这个项目做了什么)
+- [下载与安装](#下载与安装)
+- [从源码构建](#从源码构建)
+- [与上游同步](#与上游同步)
+- [相关文档](#相关文档)
+- [许可证](#许可证)
 
-- General settings keep only the query log and the statistics configuration.
-- DNS settings no longer have the access settings, and the blocking mode only
-  offers the default option.
-- The Blocked services, Setup guide, and DHCP tabs are removed along with
-  their pages.
-- The dashboard no longer shows blocked threats, blocked adult websites, safe
-  search, and top clients.
-- The footer no longer links to the homepage, the privacy policy, and the
-  issue tracker.
+## 这个项目做了什么
 
-The build is Linux-only:
+DNS 服务、过滤规则、查询日志、客户端管理、加密和 REST API 与上游一致，删掉的是用不上的部分。
 
-- Only `linux/amd64` (x86_64) and `linux/arm64` are supported and built.
-- The code and the build configuration for the other operating systems, the
-  Snapcraft and Docker builds, the next-generation frontend, and the
-  unfinished next API are removed.
-- Update checks are disabled, because the AdGuard update server only serves
-  the official builds.  Setting a custom update URL still works.
+界面精简：
 
-Versions are dates, for example `v2026-09-23`.  See `scripts/make/version.sh`.
+- 常规设置只保留日志配置与统计配置。
+- DNS 设置删除「访问设置」，「拦截模式」只保留默认选项。
+- 删除「已阻止的服务」「设置指导」「DHCP」三个选项卡及其页面。
+- 删除「加密设置」选项卡及其功能，包括页面、路由、状态管理和 HTTP 调用。
+- 首页仪表盘不再显示被拦截的恶意/钓鱼网站、被拦截的成人网站、强制安全搜索，以及客户端排行。
+- 查询日志的筛选下拉只保留：所有查询记录、已过滤、已处理、已阻止、允许项、重写项。
+- 查询日志里的「放行 / 拦截」按钮旁只保留单个按钮，去掉「仅对此客户端拦截」「仅解除对此客户端的拦截」「不允许这个客户端」「添加为持久客户端」。
+- 页脚删除主页、隐私政策、问题反馈链接。
 
-## Download
+功能精简：
 
-The workflow `.github/workflows/build-linux.yml` produces:
+- 删除「安全搜索」功能本身：前端代码、各搜索引擎规则文件、HTTP API。
+- 删除「已阻止的服务」功能本身：服务清单、服务图标接口，以及客户端与统计里的相关字段。
+- 界面只保留 English、简体中文、繁體中文三种语言。
+
+只保留 Linux：
+
+- 只支持并构建 `linux/amd64`（x86_64）与 `linux/arm64`。
+- 删除其它操作系统的代码与构建配置、Snapcraft 与 Docker 构建、新版前端，以及未完成的 next API。
+- 关闭在线更新检查，因为 AdGuard 的更新服务器只提供官方构建；自行配置自定义更新地址仍然可用。
+
+有意保留的部分，不是漏删：
+
+- 查询日志与统计数据里的 reason / result 编号保留为占位常量，老日志、老统计文件升级后仍能正常读取。
+- `internal/configmigrate` 的历史迁移里仍会出现 `safe_search` / `blocked_services` 字样，那是给老版 `AdGuardHome.yaml` 升级用的，删掉会导致老配置无法迁移。
+
+版本号使用日期，例如 `v2026-09-24`，见 `scripts/make/version.sh`。
+
+## 下载与安装
+
+每次发版都会附上这些文件：
 
 - `AdGuardHome_linux_amd64.tar.gz` — x86_64
 - `AdGuardHome_linux_arm64.tar.gz` — arm64
-- `checksums.txt` — SHA-256 hashes of the archives
+- `checksums.txt` — 压缩包的 SHA-256 校验和
 
-Run the workflow from the Actions tab and download the `AdGuardHome-linux`
-artifact, or push a tag such as `v2026-09-23` to get a release with the same
-files attached.
+去 [Releases](https://github.com/liuzq2002/AdguardHome-Mod/releases) 下载，或者在 Actions 页面手动运行工作流并下载 `AdGuardHome-linux` 产物。
 
-## Build from source
+```sh
+tar -xzf AdGuardHome_linux_arm64.tar.gz
+cd AdGuardHome
+sha256sum -c --ignore-missing checksums.txt
+```
 
-Requirements: Go 1.26.8 or later and Node.js 24.
+替换原来的可执行文件后重启。面板「更新」处显示的版本号应当是 `v2026-09-24` 这样的日期；如果显示 `v0.107.x` 之类，说明装的还是官方原版。换过二进制之后，浏览器建议强刷一次，避免缓存到旧界面。
+
+## 从源码构建
+
+需要 Go 1.26.8 或更高版本，以及 Node.js 24。
 
 ```sh
 make quick-build
 ```
 
-The separate steps are:
+分开执行是：
 
 ```sh
 make js-deps       # npm ci
-make js-build      # bundle the frontend into build/static
-make go-build      # build the ./AdGuardHome binary
+make js-build      # 把前端打包进 build/static
+make go-build      # 生成 ./AdGuardHome
 ```
 
-To produce the release archives locally:
+本地生成发布包：
 
 ```sh
 make build-release SIGN=0
 make pack-release SIGN=0
 ```
 
-The result is written into `dist/`.
+产物位于 `dist/`。
 
-## Keeping up with upstream
+## 与上游同步
 
-The mod tracks [AdGuard Home][AdGuard Home].  Add the upstream repository
-once, and merge its changes into your own branch:
+本仓库跟随 [AdGuard Home][AdGuard Home]。先添加上游仓库，然后把上游的改动合并到自己的分支：
 
 ```sh
 git remote add upstream https://github.com/AdguardTeam/AdGuardHome.git
@@ -85,28 +123,25 @@ git fetch upstream
 git merge upstream/master
 ```
 
-Most of the upstream changes merge cleanly.  The files below are changed on
-purpose and are the usual source of conflicts:
+大部分上游改动可以干净合并，下面这些文件是本项目有意改过的，冲突通常出在这里：
 
-| Path | What to keep |
+| 路径 | 需要保留的内容 |
 | --- | --- |
-| `client/src/components/App/` | the trimmed routes |
-| `client/src/components/Dashboard/` | the trimmed cards and tables |
-| `client/src/components/Header/Menu.tsx` | the trimmed navigation |
-| `client/src/components/Settings/` | the trimmed general and DNS settings |
-| `client/src/components/ui/Footer.tsx` | the trimmed footer |
-| `.github/`, `Makefile`, `scripts/make/` | the Linux-only build and CI |
-| `internal/home/home.go` | the disabled update check |
+| `client/src/components/App/` | 精简后的路由 |
+| `client/src/components/Dashboard/` | 精简后的卡片与表格 |
+| `client/src/components/Header/Menu.tsx` | 精简后的导航 |
+| `client/src/components/Settings/` | 精简后的常规设置与 DNS 设置 |
+| `client/src/components/ui/Footer.tsx` | 精简后的页脚 |
+| `.github/`、`Makefile`、`scripts/make/` | 只保留 Linux 的构建与 CI |
+| `internal/home/home.go` | 关闭的更新检查 |
 
-After merging, run `make quick-build`, then push.  The workflow lints, tests,
-and builds both architectures.
+合并完成后运行 `make quick-build` 再推送；CI 会跑 lint、测试并构建两个架构。
 
-## Documentation
+## 相关文档
 
-- [Upstream wiki](https://github.com/AdguardTeam/AdGuardHome/wiki)
-- [Upstream API description](https://github.com/AdguardTeam/AdGuardHome/tree/master/openapi)
+- [上游 Wiki](https://github.com/AdguardTeam/AdGuardHome/wiki)
+- [上游 API 文档](https://github.com/AdguardTeam/AdGuardHome/tree/master/openapi)
 
-## License
+## 许可证
 
-GNU General Public License v3.0, see [LICENSE.txt](LICENSE.txt).  Based on
-AdGuard Home, © AdGuard Software Ltd.
+GNU General Public License v3.0，见 [LICENSE.txt](LICENSE.txt)。本项目基于 AdGuard Home，© AdGuard Software Ltd.

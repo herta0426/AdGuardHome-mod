@@ -1,32 +1,42 @@
-# Changelog
+# 更新日志
 
-All notable changes to this mod are documented here.  The changes of the
-upstream project are in the [AdGuard Home changelog][upstream].
+本 mod 的主要改动记录在这里，上游项目的改动见 [AdGuard Home 更新日志][upstream]。
 
 [upstream]: https://github.com/AdguardTeam/AdGuardHome/blob/master/CHANGELOG.md
 
+## v2026-09-24
+
+### 移除
+
+- 「加密设置」选项卡及其功能：页面、路由、状态管理与 HTTP 调用。
+- 查询日志筛选里的「已阻止的服务」「拦截的威胁」「被家长控制阻止」「安全搜索」。
+- 首页的被拦截的恶意/钓鱼网站、被拦截的成人网站、强制安全搜索三个卡片，以及客户端排行。
+- 「安全搜索」功能本身：前端代码、各搜索引擎规则文件、HTTP API。
+- 「已阻止的服务」功能本身：服务清单、服务图标接口，以及客户端与统计里的相关字段。
+- 查询日志「放行 / 拦截」按钮旁的「仅对此客户端拦截」「仅解除对此客户端的拦截」「不允许这个客户端」「添加为持久客户端」。
+- 随上述功能一起失效的语言键。
+
+### 变更
+
+- 发布说明改为中文优先。
+- 语言只保留 English、简体中文、繁體中文。
+
 ## v2026-09-23
 
-The first release of the mod.
+本 mod 的首个版本。
 
-### Changed
+### 变更
 
-- General settings keep only the query log and the statistics configuration.
-- DNS settings no longer have the access settings, and the blocking mode only
-  offers the default option.
-- The Blocked services, Setup guide, and DHCP tabs are removed along with
-  their pages and the frontend code behind them.
-- The dashboard no longer shows blocked threats, blocked adult websites, safe
-  search, and top clients.
-- The footer no longer links to the homepage, the privacy policy, and the
-  issue tracker.
-- Versions are now dates, for example `v2026-09-23`.
-- Update checks are disabled, because the AdGuard update server only serves
-  the official builds.
+- 常规设置只保留日志配置与统计配置。
+- DNS 设置删除「访问设置」，「拦截模式」只保留默认选项。
+- 删除「已阻止的服务」「设置指导」「DHCP」选项卡及其页面，以及页面背后的前端代码。
+- 首页不再显示被拦截的威胁、被拦截的成人网站、安全搜索与客户端排行。
+- 页脚删除主页、隐私政策、问题反馈链接。
+- 版本号改为日期格式，例如 `v2026-09-23`。
+- 关闭在线更新检查，因为 AdGuard 的更新服务器只提供官方构建。
 
-### Removed
+### 移除
 
-- The code and the build configuration for the operating systems other than
-  Linux.
-- The Snapcraft and Docker builds, and the scripts behind them.
-- The next-generation frontend, and the unfinished next API.
+- 除 Linux 以外其它操作系统的代码与构建配置。
+- Snapcraft 与 Docker 构建及其脚本。
+- 新版前端，以及未完成的 next API。

@@ -209,3 +209,18 @@ jobs:
             dist/AdGuardHome_linux_amd64.tar.gz
             dist/AdGuardHome_linux_arm64.tar.gz
           generate_release_notes: true
+          body: |
+            Linux x86_64 与 arm64 的发布包，解压后替换可执行文件即可。
+
+            - `AdGuardHome_linux_amd64.tar.gz` — x86_64
+            - `AdGuardHome_linux_arm64.tar.gz` — arm64
+            - `checksums.txt` — 压缩包的 SHA-256 校验和
+
+            解压与校验：
+
+            ```sh
+            tar -xzf AdGuardHome_linux_arm64.tar.gz
+            sha256sum -c --ignore-missing checksums.txt
+            ```
+
+            这是 AdGuard Home 的非官方精简版，主要为 Adguard-Home-For-Magisk-Mod 适配。改动内容、构建方式与上游同步方法见仓库首页的 README。

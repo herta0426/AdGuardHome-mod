@@ -1,0 +1,147 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/AdguardTeam/AdGuardHome/raw/master/doc/adguard_home_darkmode.svg">
+    <img alt="AdGuard Home" src="https://github.com/AdguardTeam/AdGuardHome/raw/master/doc/adguard_home_lightmode.svg" width="300px">
+  </picture>
+</p>
+
+<h3 align="center">A trimmed-down AdGuard Home</h3>
+
+<p align="center">Network-wide ads and trackers blocking DNS server, slimmed down for the Magisk module.</p>
+
+<p align="center"><a href="README.md">简体中文</a> / English</p>
+
+<p align="center">
+  <a href="https://github.com/liuzq2002/AdguardHome-Mod/releases"><img src="https://img.shields.io/github/v/release/liuzq2002/AdguardHome-Mod" alt="Latest release"/></a>
+  <a href="https://github.com/liuzq2002/AdguardHome-Mod/actions/workflows/build-linux.yml"><img src="https://github.com/liuzq2002/AdguardHome-Mod/actions/workflows/build-linux.yml/badge.svg" alt="Build status"/></a>
+  <a href="LICENSE.txt"><img src="https://img.shields.io/badge/license-GPL--3.0-blue.svg" alt="License"/></a>
+</p>
+
+<hr/>
+
+[AdGuard Home] is a network-wide software for blocking ads and tracking.  Once it is set up, it covers all your home devices, and none of them needs any client-side software: it re-routes the tracking domains to a "black hole", so the devices cannot reach those servers.  It is based on the same software as the public [AdGuard DNS] servers.
+
+This repository is an **unofficial, trimmed-down mod** of AdGuard Home, mainly adapted for [Adguard-Home-For-Magisk-Mod], which packages AdGuard Home as a Magisk module for Android.  RAM and storage are tight there, so the parts that are not used are removed entirely, and only the DNS server and the basic management features are kept.
+
+[AdGuard Home]: https://github.com/AdguardTeam/AdGuardHome
+[AdGuard DNS]: https://adguard-dns.io/
+[Adguard-Home-For-Magisk-Mod]: https://github.com/liuzq2002/Adguard-Home-For-Magisk-Mod
+
+> **Unofficial.**  This project is not affiliated with, endorsed by, or supported by AdGuard Software Ltd.  Report problems with the mod in this repository, and problems with AdGuard Home itself upstream.
+
+- [What this project does](#what-this-project-does)
+- [Download and install](#download-and-install)
+- [Build from source](#build-from-source)
+- [Keeping up with upstream](#keeping-up-with-upstream)
+- [Documentation](#documentation)
+- [License](#license)
+
+## What this project does
+
+The DNS server, filtering, the query log, client management, encryption, and the REST API are the same as upstream.  What is gone is the part that is not used.
+
+Trimmed admin UI:
+
+- General settings keep only the query log and the statistics configuration.
+- DNS settings no longer have the access settings, and the blocking mode only offers the default option.
+- The Blocked services, Setup guide, and DHCP tabs are removed along with their pages.
+- The Encryption settings tab is removed along with its functionality: the page, the route, the state management, and the HTTP calls.
+- The dashboard no longer shows blocked threats, blocked adult websites, safe search, and top clients.
+- The query log filter keeps only: all queries, filtered, processed, blocked, allowed, and rewritten.
+- The query log keeps a single button next to Unblock and Block; "Block for this client only", "Unblock for this client only", "Disallow this client", and "Add as persistent client" are removed.
+- The footer no longer links to the homepage, the privacy policy, and the issue tracker.
+
+Removed features:
+
+- Safe search itself: the frontend code, the per-engine rule files, and the HTTP API.
+- Blocked services itself: the service list, the icon endpoint, and the related fields in the clients and statistics data.
+- Only English, Simplified Chinese, and Traditional Chinese remain as the UI languages.
+
+Linux only:
+
+- Only `linux/amd64` (x86_64) and `linux/arm64` are supported and built.
+- The code and the build configuration for the other operating systems, the Snapcraft and Docker builds, the next-generation frontend, and the unfinished next API are removed.
+- Update checks are disabled, because the AdGuard update server only serves the official builds.  Setting a custom update URL still works.
+
+Kept on purpose, not forgotten:
+
+- The reason and result numbers in the query log and the statistics files are kept as reserved placeholders, so that the existing logs and statistics files stay readable after the upgrade.
+- The historical migrations in `internal/configmigrate` still mention `safe_search` and `blocked_services`.  They are needed to upgrade an old `AdGuardHome.yaml`, and removing them would break such upgrades.
+
+Versions are dates, for example `v2026-09-24`.  See `scripts/make/version.sh`.
+
+## Download and install
+
+Every release carries these files:
+
+- `AdGuardHome_linux_amd64.tar.gz` — x86_64
+- `AdGuardHome_linux_arm64.tar.gz` — arm64
+- `checksums.txt` — SHA-256 hashes of the archives
+
+Download them from [Releases](https://github.com/liuzq2002/AdguardHome-Mod/releases), or run the workflow from the Actions tab and download the `AdGuardHome-linux` artifact.
+
+```sh
+tar -xzf AdGuardHome_linux_arm64.tar.gz
+cd AdGuardHome
+sha256sum -c --ignore-missing checksums.txt
+```
+
+Replace the executable and restart.  The version shown in the update section of the dashboard should be a date such as `v2026-09-24`; if it shows `v0.107.x` or similar, the official build is still installed.  Hard-refresh the browser once after replacing the binary, so that it does not serve the cached frontend.
+
+## Build from source
+
+Requirements: Go 1.26.8 or later and Node.js 24.
+
+```sh
+make quick-build
+```
+
+The separate steps are:
+
+```sh
+make js-deps       # npm ci
+make js-build      # bundle the frontend into build/static
+make go-build      # build the ./AdGuardHome binary
+```
+
+To produce the release archives locally:
+
+```sh
+make build-release SIGN=0
+make pack-release SIGN=0
+```
+
+The result is written into `dist/`.
+
+## Keeping up with upstream
+
+The mod tracks [AdGuard Home][AdGuard Home].  Add the upstream repository once, and merge its changes into your own branch:
+
+```sh
+git remote add upstream https://github.com/AdguardTeam/AdGuardHome.git
+git fetch upstream
+git merge upstream/master
+```
+
+Most of the upstream changes merge cleanly.  The files below are changed on purpose and are the usual source of conflicts:
+
+| Path | What to keep |
+| --- | --- |
+| `client/src/components/App/` | the trimmed routes |
+| `client/src/components/Dashboard/` | the trimmed cards and tables |
+| `client/src/components/Header/Menu.tsx` | the trimmed navigation |
+| `client/src/components/Settings/` | the trimmed general and DNS settings |
+| `client/src/components/ui/Footer.tsx` | the trimmed footer |
+| `.github/`, `Makefile`, `scripts/make/` | the Linux-only build and CI |
+| `internal/home/home.go` | the disabled update check |
+
+After merging, run `make quick-build`, then push.  The workflow lints, tests, and builds both architectures.
+
+## Documentation
+
+- [Upstream wiki](https://github.com/AdguardTeam/AdGuardHome/wiki)
+- [Upstream API description](https://github.com/AdguardTeam/AdGuardHome/tree/master/openapi)
+
+## License
+
+GNU General Public License v3.0, see [LICENSE.txt](LICENSE.txt).  Based on AdGuard Home, © AdGuard Software Ltd.
