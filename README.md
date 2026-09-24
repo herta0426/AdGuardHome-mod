@@ -21,8 +21,7 @@
 
 [AdGuard Home] 是一个全网拦截广告和跟踪的 DNS 服务器。部署好之后，它覆盖家里的所有设备，任何设备都不需要再装客户端软件：它把跟踪域名解析到"黑洞"地址，让设备连不上那些服务器。它和 AdGuard 公共 [AdGuard DNS] 服务使用同一套代码。
 
-本仓库是 AdGuard Home 的**非官方修改版（Mod）**，主要为 [Adguard-Home-For-Magisk-Mod] 适配。那个项目把 AdGuard Home 打包成 Magisk 模块装进 Android，内存和存储都很紧张，所以先把用不到的功能整个去掉，只保留 DNS 服务与基本的管理能力；之后会在这个基础上继续加入本项目自己的功能。
-
+本仓库是 AdGuard Home 的**非官方修改版（Mod）**，主要为 [Adguard-Home-For-Magisk-Mod] 适配。
 [AdGuard Home]: https://github.com/AdguardTeam/AdGuardHome
 [AdGuard DNS]: https://adguard-dns.io/
 [Adguard-Home-For-Magisk-Mod]: https://github.com/liuzq2002/Adguard-Home-For-Magisk-Mod
