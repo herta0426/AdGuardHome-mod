@@ -5,9 +5,9 @@
   </picture>
 </p>
 
-<h3 align="center">AdGuard Home 精简版</h3>
+<h3 align="center">AdGuard Home 修改版（Mod）</h3>
 
-<p align="center">全网去广告与反跟踪的 DNS 服务器，为 Magisk 模块精简与适配。</p>
+<p align="center">全网去广告与反跟踪的 DNS 服务器，为 Magisk 模块做的定制修改版。</p>
 
 <p align="center">简体中文 / <a href="README.en.md">English</a></p>
 
@@ -21,7 +21,7 @@
 
 [AdGuard Home] 是一个全网拦截广告和跟踪的 DNS 服务器。部署好之后，它覆盖家里的所有设备，任何设备都不需要再装客户端软件：它把跟踪域名解析到"黑洞"地址，让设备连不上那些服务器。它和 AdGuard 公共 [AdGuard DNS] 服务使用同一套代码。
 
-本仓库是 AdGuard Home 的**非官方精简版**，主要为 [Adguard-Home-For-Magisk-Mod] 适配。那个项目把 AdGuard Home 打包成 Magisk 模块装进 Android，内存和存储都很紧张，所以这个版本把用不到的功能整个删掉了，只保留 DNS 服务与基本的管理能力。
+本仓库是 AdGuard Home 的**非官方修改版（Mod）**，主要为 [Adguard-Home-For-Magisk-Mod] 适配。那个项目把 AdGuard Home 打包成 Magisk 模块装进 Android，内存和存储都很紧张，所以先把用不到的功能整个去掉，只保留 DNS 服务与基本的管理能力；之后会在这个基础上继续加入本项目自己的功能。
 
 [AdGuard Home]: https://github.com/AdguardTeam/AdGuardHome
 [AdGuard DNS]: https://adguard-dns.io/
@@ -40,7 +40,7 @@
 
 DNS 服务、过滤规则、查询日志、客户端管理、加密和 REST API 与上游一致，删掉的是用不上的部分。
 
-界面精简：
+界面上的改动：
 
 - 常规设置只保留日志配置与统计配置。
 - DNS 设置删除「访问设置」，「拦截模式」只保留默认选项。
@@ -51,7 +51,7 @@ DNS 服务、过滤规则、查询日志、客户端管理、加密和 REST API 
 - 查询日志里的「放行 / 拦截」按钮旁只保留单个按钮，去掉「仅对此客户端拦截」「仅解除对此客户端的拦截」「不允许这个客户端」「添加为持久客户端」。
 - 页脚删除主页、隐私政策、问题反馈链接。
 
-功能精简：
+删掉的功能：
 
 - 删除「安全搜索」功能本身：前端代码、各搜索引擎规则文件、HTTP API。
 - 删除「已阻止的服务」功能本身：服务清单、服务图标接口，以及客户端与统计里的相关字段。
@@ -67,6 +67,8 @@ DNS 服务、过滤规则、查询日志、客户端管理、加密和 REST API 
 
 - 查询日志与统计数据里的 reason / result 编号保留为占位常量，老日志、老统计文件升级后仍能正常读取。
 - `internal/configmigrate` 的历史迁移里仍会出现 `safe_search` / `blocked_services` 字样，那是给老版 `AdGuardHome.yaml` 升级用的，删掉会导致老配置无法迁移。
+
+本项目不只是做减法：后续会继续加入自己的功能与调整，改动都记录在 [CHANGELOG.md](CHANGELOG.md) 里。
 
 版本号使用日期，例如 `v2026-09-24`，见 `scripts/make/version.sh`。
 
@@ -127,11 +129,11 @@ git merge upstream/master
 
 | 路径 | 需要保留的内容 |
 | --- | --- |
-| `client/src/components/App/` | 精简后的路由 |
-| `client/src/components/Dashboard/` | 精简后的卡片与表格 |
-| `client/src/components/Header/Menu.tsx` | 精简后的导航 |
-| `client/src/components/Settings/` | 精简后的常规设置与 DNS 设置 |
-| `client/src/components/ui/Footer.tsx` | 精简后的页脚 |
+| `client/src/components/App/` | 修改后的路由 |
+| `client/src/components/Dashboard/` | 修改后的卡片与表格 |
+| `client/src/components/Header/Menu.tsx` | 修改后的导航 |
+| `client/src/components/Settings/` | 修改后的常规设置与 DNS 设置 |
+| `client/src/components/ui/Footer.tsx` | 修改后的页脚 |
 | `.github/`、`Makefile`、`scripts/make/` | 只保留 Linux 的构建与 CI |
 | `internal/home/home.go` | 关闭的更新检查 |
 
