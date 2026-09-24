@@ -5,9 +5,9 @@
   </picture>
 </p>
 
-<h3 align="center">A trimmed-down AdGuard Home</h3>
+<h3 align="center">AdGuard Home Mod</h3>
 
-<p align="center">Network-wide ads and trackers blocking DNS server, slimmed down for the Magisk module.</p>
+<p align="center">Network-wide ads and trackers blocking DNS server, customized for the Magisk module.</p>
 
 <p align="center"><a href="README.md">简体中文</a> / English</p>
 
@@ -21,7 +21,7 @@
 
 [AdGuard Home] is a network-wide software for blocking ads and tracking.  Once it is set up, it covers all your home devices, and none of them needs any client-side software: it re-routes the tracking domains to a "black hole", so the devices cannot reach those servers.  It is based on the same software as the public [AdGuard DNS] servers.
 
-This repository is an **unofficial, trimmed-down mod** of AdGuard Home, mainly adapted for [Adguard-Home-For-Magisk-Mod], which packages AdGuard Home as a Magisk module for Android.  RAM and storage are tight there, so the parts that are not used are removed entirely, and only the DNS server and the basic management features are kept.
+This repository is an **unofficial mod** of AdGuard Home, mainly adapted for [Adguard-Home-For-Magisk-Mod], which packages AdGuard Home as a Magisk module for Android.  RAM and storage are tight there, so the parts that are not used are removed first, and the DNS server and the basic management features are kept.  Our own features will be added on top of that.
 
 [AdGuard Home]: https://github.com/AdguardTeam/AdGuardHome
 [AdGuard DNS]: https://adguard-dns.io/
@@ -40,7 +40,7 @@ This repository is an **unofficial, trimmed-down mod** of AdGuard Home, mainly a
 
 The DNS server, filtering, the query log, client management, encryption, and the REST API are the same as upstream.  What is gone is the part that is not used.
 
-Trimmed admin UI:
+Admin UI changes:
 
 - General settings keep only the query log and the statistics configuration.
 - DNS settings no longer have the access settings, and the blocking mode only offers the default option.
@@ -67,6 +67,8 @@ Kept on purpose, not forgotten:
 
 - The reason and result numbers in the query log and the statistics files are kept as reserved placeholders, so that the existing logs and statistics files stay readable after the upgrade.
 - The historical migrations in `internal/configmigrate` still mention `safe_search` and `blocked_services`.  They are needed to upgrade an old `AdGuardHome.yaml`, and removing them would break such upgrades.
+
+This project does more than remove things: more features and adjustments of our own are on the way, and all of them are listed in [CHANGELOG.md](CHANGELOG.md).
 
 Versions are dates, for example `v2026-09-24`.  See `scripts/make/version.sh`.
 
@@ -127,11 +129,11 @@ Most of the upstream changes merge cleanly.  The files below are changed on purp
 
 | Path | What to keep |
 | --- | --- |
-| `client/src/components/App/` | the trimmed routes |
-| `client/src/components/Dashboard/` | the trimmed cards and tables |
-| `client/src/components/Header/Menu.tsx` | the trimmed navigation |
-| `client/src/components/Settings/` | the trimmed general and DNS settings |
-| `client/src/components/ui/Footer.tsx` | the trimmed footer |
+| `client/src/components/App/` | the modified routes |
+| `client/src/components/Dashboard/` | the modified cards and tables |
+| `client/src/components/Header/Menu.tsx` | the modified navigation |
+| `client/src/components/Settings/` | the modified general and DNS settings |
+| `client/src/components/ui/Footer.tsx` | the modified footer |
 | `.github/`, `Makefile`, `scripts/make/` | the Linux-only build and CI |
 | `internal/home/home.go` | the disabled update check |
 

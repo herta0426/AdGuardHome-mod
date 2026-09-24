@@ -223,4 +223,4 @@ jobs:
             sha256sum -c --ignore-missing checksums.txt
             ```
 
-            这是 AdGuard Home 的非官方精简版，主要为 Adguard-Home-For-Magisk-Mod 适配。改动内容、构建方式与上游同步方法见仓库首页的 README。
+            这是 AdGuard Home 的非官方修改版（Mod），主要为 Adguard-Home-For-Magisk-Mod 适配。改动内容、构建方式与上游同步方法见仓库首页的 README。
