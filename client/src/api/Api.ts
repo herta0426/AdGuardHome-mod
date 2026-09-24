@@ -204,45 +204,6 @@ class Api {
         return this.makeRequest(path, method);
     }
 
-    // Safesearch
-    SAFESEARCH_STATUS = { path: 'safesearch/status', method: 'GET' };
-
-    SAFESEARCH_UPDATE = { path: 'safesearch/settings', method: 'PUT' };
-
-    getSafesearchStatus() {
-        const { path, method } = this.SAFESEARCH_STATUS;
-
-        return this.makeRequest(path, method);
-    }
-
-    /**
-     * interface SafeSearchConfig {
-        "enabled": boolean,
-        "bing": boolean,
-        "duckduckgo": boolean,
-        "google": boolean,
-        "pixabay": boolean,
-        "yandex": boolean,
-        "youtube": boolean
-     * }
-     * @param {*} data - SafeSearchConfig
-     * @returns 200 ok
-     */
-    updateSafesearch(data: any) {
-        const { path, method } = this.SAFESEARCH_UPDATE;
-        return this.makeRequest(path, method, { data });
-    }
-
-    // enableSafesearch() {
-    //     const { path, method } = this.SAFESEARCH_ENABLE;
-    //     return this.makeRequest(path, method);
-    // }
-
-    // disableSafesearch() {
-    //     const { path, method } = this.SAFESEARCH_DISABLE;
-    //     return this.makeRequest(path, method);
-    // }
-
     // Language
 
     async changeLanguage(config: any) {
@@ -290,45 +251,10 @@ class Api {
         return this.makeRequest(path, method, parameters);
     }
 
-    // DNS-over-HTTPS and DNS-over-TLS
-    TLS_STATUS = { path: 'tls/status', method: 'GET' };
-
-    TLS_CONFIG = { path: 'tls/configure', method: 'POST' };
-
-    TLS_VALIDATE = { path: 'tls/validate', method: 'POST' };
-
-    getTlsStatus() {
-        const { path, method } = this.TLS_STATUS;
-
-        return this.makeRequest(path, method);
-    }
-
-    setTlsConfig(config: any) {
-        const { path, method } = this.TLS_CONFIG;
-        const parameters = {
-            data: config,
-        };
-        return this.makeRequest(path, method, parameters);
-    }
-
-    validateTlsConfig(config: any) {
-        const { path, method } = this.TLS_VALIDATE;
-        const parameters = {
-            data: config,
-        };
-        return this.makeRequest(path, method, parameters);
-    }
-
     // Per-client settings
     GET_CLIENTS = { path: 'clients', method: 'GET' };
 
     SEARCH_CLIENTS = { path: 'clients/search', method: 'POST' };
-
-    ADD_CLIENT = { path: 'clients/add', method: 'POST' };
-
-    DELETE_CLIENT = { path: 'clients/delete', method: 'POST' };
-
-    UPDATE_CLIENT = { path: 'clients/update', method: 'POST' };
 
     getClients() {
         const { path, method } = this.GET_CLIENTS;
@@ -336,51 +262,8 @@ class Api {
         return this.makeRequest(path, method);
     }
 
-    addClient(config: any) {
-        const { path, method } = this.ADD_CLIENT;
-        const parameters = {
-            data: config,
-        };
-        return this.makeRequest(path, method, parameters);
-    }
-
-    deleteClient(config: any) {
-        const { path, method } = this.DELETE_CLIENT;
-        const parameters = {
-            data: config,
-        };
-        return this.makeRequest(path, method, parameters);
-    }
-
-    updateClient(config: any) {
-        const { path, method } = this.UPDATE_CLIENT;
-        const parameters = {
-            data: config,
-        };
-        return this.makeRequest(path, method, parameters);
-    }
-
     searchClients(config: any) {
         const { path, method } = this.SEARCH_CLIENTS;
-        const parameters = {
-            data: config,
-        };
-        return this.makeRequest(path, method, parameters);
-    }
-
-    // DNS access settings
-    ACCESS_LIST = { path: 'access/list', method: 'GET' };
-
-    ACCESS_SET = { path: 'access/set', method: 'POST' };
-
-    getAccessList() {
-        const { path, method } = this.ACCESS_LIST;
-
-        return this.makeRequest(path, method);
-    }
-
-    setAccessList(config: any) {
-        const { path, method } = this.ACCESS_SET;
         const parameters = {
             data: config,
         };
@@ -442,33 +325,6 @@ class Api {
         const { path, method } = this.REWRITE_SETTINGS;
 
         return this.makeRequest(path, method);
-    }
-
-    // Blocked services
-    BLOCKED_SERVICES_GET = { path: 'blocked_services/get', method: 'GET' };
-
-    BLOCKED_SERVICES_UPDATE = { path: 'blocked_services/update', method: 'PUT' };
-
-    BLOCKED_SERVICES_ALL = { path: 'blocked_services/all', method: 'GET' };
-
-    getAllBlockedServices() {
-        const { path, method } = this.BLOCKED_SERVICES_ALL;
-
-        return this.makeRequest(path, method);
-    }
-
-    getBlockedServices() {
-        const { path, method } = this.BLOCKED_SERVICES_GET;
-
-        return this.makeRequest(path, method);
-    }
-
-    updateBlockedServices(config: any) {
-        const { path, method } = this.BLOCKED_SERVICES_UPDATE;
-        const parameters = {
-            data: config,
-        };
-        return this.makeRequest(path, method, parameters);
     }
 
     // Settings for statistics

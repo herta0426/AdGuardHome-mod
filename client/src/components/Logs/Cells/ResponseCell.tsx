@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { shallowEqual, useSelector } from 'react-redux';
 import classNames from 'classnames';
 import React from 'react';
-import { getRulesToFilterList, formatElapsedMs, getFilterNames, getServiceName } from '../../../helpers/helpers';
+import { getRulesToFilterList, formatElapsedMs, getFilterNames } from '../../../helpers/helpers';
 import { FILTERED_STATUS, FILTERED_STATUS_TO_META_MAP } from '../../../helpers/constants';
 
 import IconTooltip from './IconTooltip';
@@ -20,7 +20,6 @@ interface ResponseCellProps {
         text: string;
         filter_list_id: number;
     }[];
-    service_name?: string;
 }
 
 const ResponseCell = ({
@@ -31,7 +30,6 @@ const ResponseCell = ({
     status,
     upstream,
     rules,
-    service_name,
     cached,
 }: ResponseCellProps) => {
     const { t } = useTranslation();
@@ -42,12 +40,9 @@ const ResponseCell = ({
 
     const isDetailed = useSelector((state: RootState) => state.queryLogs.isDetailed);
 
-    const services = useSelector((store: RootState) => store?.services);
-
     const formattedElapsedMs = formatElapsedMs(elapsedMs, t);
 
-    const isBlocked =
-        reason === FILTERED_STATUS.FILTERED_BLACK_LIST || reason === FILTERED_STATUS.FILTERED_BLOCKED_SERVICE;
+    const isBlocked = reason === FILTERED_STATUS.FILTERED_BLACK_LIST;
 
     const isBlockedByResponse = originalResponse.length > 0 && isBlocked;
 
@@ -87,8 +82,6 @@ const ResponseCell = ({
         }),
         elapsed: formattedElapsedMs,
         response_code: status,
-        ...(service_name &&
-            services.allServices && { service_name: getServiceName(services.allServices, service_name) }),
         ...(rules.length > 0 && { rule_label: getRulesToFilterList(rules, filters, whitelistFilters) }),
         response_table_header: renderResponses(response),
         original_response: renderResponses(originalResponse),
@@ -104,11 +97,6 @@ const ResponseCell = ({
 
     const getDetailedInfo = (reason: any) => {
         switch (reason) {
-            case FILTERED_STATUS.FILTERED_BLOCKED_SERVICE:
-                if (!service_name || !services.allServices) {
-                    return formattedElapsedMs;
-                }
-                return getServiceName(services.allServices, service_name);
             case FILTERED_STATUS.FILTERED_BLACK_LIST:
             case FILTERED_STATUS.NOT_FILTERED_WHITE_LIST:
                 return getFilterNames(rules, filters, whitelistFilters).join(', ');

@@ -14,7 +14,6 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
-	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -393,9 +392,6 @@ func TestDNSFilter_HandleCheckHost(t *testing.T) {
 
 	dnsFilter, err := New(&Config{
 		Logger: testLogger,
-		BlockedServices: &BlockedServices{
-			Schedule: schedule.EmptyWeekly(),
-		},
 		ApplyClientFiltering: func(clientID string, cliAddr netip.Addr, setts *Settings) {
 			setts.ClientName = clientNames[clientID]
 		},

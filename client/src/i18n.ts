@@ -12,46 +12,19 @@ import en from './__locales/en.json';
 import zhCN from './__locales/zh-cn.json';
 import zhTW from './__locales/zh-tw.json';
 
-// Services translations
-import enServices from './__locales-services/en.json';
-import zhCNServices from './__locales-services/zh-cn.json';
-import zhTWServices from './__locales-services/zh-tw.json';
-
-/**
- * Helper function to convert services object into a flat `{ key: message }` format.
- *
- * Supported formats:
- * - { message: "..." }
- *
- * Example:
- * Input:  { a: { message: "one" }, b: { message: "two" } }
- * Output: { a: "one", b: "two" }
- */
-const convertServicesFormat = (
-    services: Record<string, { message: string }>,
-): Record<string, string> => {
-    return Object.fromEntries(
-        Object.entries(services).map(([key, value]) => [key, value.message])
-    );
-};
-
 // Resources
 const resources = {
     en: {
         translation: en,
-        services: convertServicesFormat(enServices),
     },
     'en-us': {
         translation: en,
-        services: convertServicesFormat(enServices),
     },
     'zh-cn': {
         translation: zhCN,
-        services: convertServicesFormat(zhCNServices),
     },
     'zh-tw': {
         translation: zhTW,
-        services: convertServicesFormat(zhTWServices),
     },
 };
 
@@ -68,7 +41,7 @@ i18n
             keySeparator: false,
             nsSeparator: false,
             returnEmptyString: false,
-            ns: ['translation', 'services'],
+            ns: ['translation'],
             defaultNS: 'translation',
             interpolation: {
                 escapeValue: false,

@@ -22,7 +22,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
-	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
 	"github.com/AdguardTeam/dnsproxy/fastip"
 	"github.com/AdguardTeam/golibs/errors"
@@ -504,25 +503,8 @@ var config = &configuration{
 
 		MaxHTTPSize:           rulelist.DefaultMaxRuleListSize,
 		SafeBrowsingCacheSize: 1 * 1024 * 1024,
-		SafeSearchCacheSize:   1 * 1024 * 1024,
 		ParentalCacheSize:     1 * 1024 * 1024,
 		CacheTime:             30,
-
-		SafeSearchConf: filtering.SafeSearchConfig{
-			Enabled:    false,
-			Bing:       true,
-			DuckDuckGo: true,
-			Ecosia:     true,
-			Google:     true,
-			Pixabay:    true,
-			Yandex:     true,
-			YouTube:    true,
-		},
-
-		BlockedServices: &filtering.BlockedServices{
-			Schedule: schedule.EmptyWeekly(),
-			IDs:      []string{},
-		},
 
 		ParentalBlockHost:     defaultParentalBlockHost,
 		SafeBrowsingBlockHost: defaultSafeBrowsingBlockHost,

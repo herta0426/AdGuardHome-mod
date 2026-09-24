@@ -415,8 +415,6 @@ func (s *Server) processFilteringBeforeRequest(
 		// so disable redundant filters.
 		dctx.setts.ParentalEnabled = false
 		dctx.setts.SafeBrowsingEnabled = false
-		dctx.setts.SafeSearchEnabled = false
-		dctx.setts.ServicesRules = nil
 	}
 
 	if dctx.proxyCtx.Res != nil {
@@ -562,8 +560,7 @@ func (s *Server) processFilteringAfterResponse(
 		return resultCodeSuccess
 	case
 		filtering.Rewritten,
-		filtering.RewrittenRule,
-		filtering.FilteredSafeSearch:
+		filtering.RewrittenRule:
 
 		if dctx.origQuestion.Name == "" {
 			// origQuestion is set in case we get only CNAME without IP from

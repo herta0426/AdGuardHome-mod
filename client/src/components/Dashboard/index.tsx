@@ -20,31 +20,26 @@ import Dropdown from '../ui/Dropdown';
 import UpstreamResponses from './UpstreamResponses';
 
 import UpstreamAvgTime from './UpstreamAvgTime';
-import { AccessData, DashboardData, StatsData } from '../../initialState';
+import { DashboardData, StatsData } from '../../initialState';
 
 interface DashboardProps {
     dashboard: DashboardData;
     stats: StatsData;
-    access: AccessData;
     getStats: (...args: unknown[]) => unknown;
     getStatsConfig: (...args: unknown[]) => unknown;
     toggleProtection: (...args: unknown[]) => unknown;
-    getAccessList: () => (dispatch: any) => void;
 }
 
 const Dashboard = ({
-    getAccessList,
     getStats,
     getStatsConfig,
     dashboard: { protectionEnabled, processingProtection, protectionDisabledDuration },
     toggleProtection,
     stats,
-    access,
 }: DashboardProps) => {
     const { t } = useTranslation();
 
     const getAllStats = () => {
-        getAccessList();
         getStats();
         getStatsConfig();
     };
@@ -85,7 +80,7 @@ const Dashboard = ({
         </button>
     );
 
-    const statsProcessing = stats.processingStats || stats.processingGetConfig || access.processing;
+    const statsProcessing = stats.processingStats || stats.processingGetConfig;
 
     const subtitle = getSubtitle();
 
@@ -218,7 +213,6 @@ const Dashboard = ({
                             topBlockedDomains={stats.topBlockedDomains}
                             blockedFiltering={stats.numBlockedFiltering}
                             replacedSafebrowsing={stats.numReplacedSafebrowsing}
-                            replacedSafesearch={stats.numReplacedSafesearch}
                             replacedParental={stats.numReplacedParental}
                             refreshButton={refreshButton}
                         />

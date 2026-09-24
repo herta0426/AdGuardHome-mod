@@ -15,7 +15,6 @@ import Footer from '../ui/Footer';
 import Status from '../ui/Status';
 import UpdateTopline from '../ui/UpdateTopline';
 import UpdateOverlay from '../ui/UpdateOverlay';
-import EncryptionTopline from '../ui/EncryptionTopline';
 import Icons from '../ui/Icons';
 import i18n from '../../i18n';
 
@@ -31,7 +30,6 @@ import { getDnsStatus, getTimerStatus } from '../../actions';
 import Dashboard from '../../containers/Dashboard';
 import Settings from '../../containers/Settings';
 import Dns from '../../containers/Dns';
-import Encryption from '../../containers/Encryption';
 
 import DnsBlocklist from '../../containers/DnsBlocklist';
 import DnsAllowlist from '../../containers/DnsAllowlist';
@@ -61,10 +59,6 @@ const ROUTES = [
         component: Dns,
     },
     {
-        path: SETTINGS_URLS.encryption,
-        component: Encryption,
-    },
-    {
         path: FILTERS_URLS.dns_blocklists,
         component: DnsBlocklist,
     },
@@ -88,11 +82,6 @@ const App = () => {
         RootState,
         RootState['dashboard']
     >((state) => state.dashboard, shallowEqual);
-
-    const { processing: processingEncryption } = useSelector<RootState, RootState['encryption']>(
-        (state) => state.encryption,
-        shallowEqual,
-    );
 
     const updateAvailable = isCoreRunning && isUpdateAvailable;
 
@@ -172,8 +161,6 @@ const App = () => {
                     <UpdateOverlay />
                 </>
             )}
-
-            {!processingEncryption && <EncryptionTopline />}
 
             <LoadingBar className="loading-bar" updateTime={1000} />
 

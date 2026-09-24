@@ -30,8 +30,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/hashprefix"
-	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
-	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
 	"github.com/AdguardTeam/dnsproxy/dnsproxytest"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
@@ -127,14 +125,6 @@ func startDeferStop(tb testing.TB, s *Server) {
 // [filtering.Config] that does nothing.
 func applyEmptyClientFiltering(_ string, _ netip.Addr, _ *filtering.Settings) {}
 
-// emptyFilteringBlockedServices is a helper function that returns an empty
-// filtering blocked services for tests.
-func emptyFilteringBlockedServices() (bsvc *filtering.BlockedServices) {
-	return &filtering.BlockedServices{
-		Schedule: schedule.EmptyWeekly(),
-	}
-}
-
 // createTestServer is a helper function that returns a properly initialized
 // *Server for use in tests, given the provided parameters.  It also populates
 // the filtering configuration with default parameters.
@@ -157,8 +147,6 @@ func createTestServer(
 		ID:   0,
 		Data: []byte(rules),
 	}}
-
-	filterConf.BlockedServices = cmp.Or(filterConf.BlockedServices, emptyFilteringBlockedServices())
 
 	if filterConf.ApplyClientFiltering == nil {
 		filterConf.ApplyClientFiltering = applyEmptyClientFiltering
@@ -579,8 +567,6 @@ func TestServerRace(t *testing.T) {
 	filterConf := &filtering.Config{
 		SafeBrowsingEnabled:   true,
 		SafeBrowsingCacheSize: 1000,
-		SafeSearchConf:        filtering.SafeSearchConfig{Enabled: true},
-		SafeSearchCacheSize:   1000,
 		ParentalCacheSize:     1000,
 		CacheTime:             30,
 	}
@@ -604,130 +590,6 @@ func TestServerRace(t *testing.T) {
 	require.NoErrorf(t, err, "cannot connect to the proxy: %s", err)
 
 	sendTestMessagesAsync(t, conn)
-}
-
-func TestSafeSearch(t *testing.T) {
-	const (
-		googleSafeSearch = "forcesafesearch.google.com."
-	)
-
-	safeSearchConf := filtering.SafeSearchConfig{
-		Enabled: true,
-		Google:  true,
-		Yandex:  true,
-	}
-
-	filterConf := &filtering.Config{
-		Logger:              testLogger,
-		BlockingMode:        filtering.BlockingModeDefault,
-		ProtectionEnabled:   true,
-		SafeSearchConf:      safeSearchConf,
-		SafeSearchCacheSize: 1000,
-		CacheTime:           30,
-	}
-
-	ctx := testutil.ContextWithTimeout(t, testTimeout)
-	safeSearch, err := safesearch.NewDefault(ctx, &safesearch.DefaultConfig{
-		Logger:         testLogger,
-		ServicesConfig: safeSearchConf,
-		CacheSize:      filterConf.SafeSearchCacheSize,
-		CacheTTL:       time.Minute * time.Duration(filterConf.CacheTime),
-	})
-	require.NoError(t, err)
-
-	filterConf.SafeSearch = safeSearch
-	forwardConf := ServerConfig{
-		UDPListenAddrs: []*net.UDPAddr{{}},
-		TCPListenAddrs: []*net.TCPAddr{{}},
-		TLSConf:        &TLSConfig{},
-		Config: Config{
-			UpstreamMode: UpstreamModeLoadBalance,
-			EDNSClientSubnet: &EDNSClientSubnet{
-				Enabled: false,
-			},
-			ClientsContainer: EmptyClientsContainer{},
-		},
-		ServePlainDNS: true,
-	}
-	s := createTestServer(t, filterConf, forwardConf, testTLSManager)
-
-	pt := testutil.NewPanicT(t)
-	ups := aghtest.NewUpstream()
-	ups.OnExchange = func(req *dns.Msg) (resp *dns.Msg, err error) {
-		assert.Equal(pt, googleSafeSearch, req.Question[0].Name)
-
-		return aghtest.MatchedResponse(req, dns.TypeA, googleSafeSearch, "1.2.3.4"), nil
-	}
-
-	s.conf.UpstreamConfig.Upstreams = []upstream.Upstream{ups}
-
-	startDeferStop(t, s)
-	addr := s.dnsProxy.Addr(proxy.ProtoUDP).String()
-
-	yandexIP := netip.AddrFrom4([4]byte{213, 180, 193, 56})
-
-	testCases := []struct {
-		host      string
-		want      netip.Addr
-		wantCNAME string
-	}{{
-		host:      "yandex.com.",
-		want:      yandexIP,
-		wantCNAME: "",
-	}, {
-		host:      "yandex.by.",
-		want:      yandexIP,
-		wantCNAME: "",
-	}, {
-		host:      "yandex.kz.",
-		want:      yandexIP,
-		wantCNAME: "",
-	}, {
-		host:      "yandex.ru.",
-		want:      yandexIP,
-		wantCNAME: "",
-	}, {
-		host:      "www.google.com.",
-		want:      netip.Addr{},
-		wantCNAME: "forcesafesearch.google.com.",
-	}, {
-		host:      "www.google.com.af.",
-		want:      netip.Addr{},
-		wantCNAME: "forcesafesearch.google.com.",
-	}, {
-		host:      "www.google.be.",
-		want:      netip.Addr{},
-		wantCNAME: "forcesafesearch.google.com.",
-	}, {
-		host:      "www.google.by.",
-		want:      netip.Addr{},
-		wantCNAME: "forcesafesearch.google.com.",
-	}}
-
-	for _, tc := range testCases {
-		t.Run(tc.host, func(t *testing.T) {
-			req := createTestMessage(tc.host)
-
-			var reply *dns.Msg
-			reply, err = dns.Exchange(req, addr)
-			require.NoError(t, err)
-
-			if tc.wantCNAME != "" {
-				require.Len(t, reply.Answer, 2)
-
-				cname := testutil.RequireTypeAssert[*dns.CNAME](t, reply.Answer[0])
-				assert.Equal(t, tc.wantCNAME, cname.Target)
-
-				a := testutil.RequireTypeAssert[*dns.A](t, reply.Answer[1])
-				assert.NotEmpty(t, a.A)
-			} else {
-				require.Len(t, reply.Answer, 1)
-
-				a := testutil.RequireTypeAssert[*dns.A](t, reply.Answer[0])
-				assert.Equal(t, net.IP(tc.want.AsSlice()), a.A)
-			}
-		})
-	}
 }
 
 func TestInvalidRequest(t *testing.T) {
@@ -1124,7 +986,6 @@ func TestBlockedCustomIP(t *testing.T) {
 		Logger:               testLogger,
 		ProtectionEnabled:    true,
 		ApplyClientFiltering: applyEmptyClientFiltering,
-		BlockedServices:      emptyFilteringBlockedServices(),
 		BlockingMode:         filtering.BlockingModeCustomIP,
 		BlockingIPv4:         netip.Addr{},
 		BlockingIPv6:         netip.Addr{},
@@ -1317,7 +1178,6 @@ func TestRewrite(t *testing.T) {
 	c := &filtering.Config{
 		Logger:               testLogger,
 		ApplyClientFiltering: applyEmptyClientFiltering,
-		BlockedServices:      emptyFilteringBlockedServices(),
 		BlockingMode:         filtering.BlockingModeDefault,
 		Rewrites: []*filtering.LegacyRewrite{{
 			Domain:  "test.com",
@@ -1474,7 +1334,6 @@ func TestPTRResponseFromDHCPLeases(t *testing.T) {
 	flt, err := filtering.New(&filtering.Config{
 		Logger:               testLogger,
 		ApplyClientFiltering: applyEmptyClientFiltering,
-		BlockedServices:      emptyFilteringBlockedServices(),
 		BlockingMode:         filtering.BlockingModeDefault,
 	}, nil)
 	require.NoError(t, err)
@@ -1568,7 +1427,6 @@ func TestPTRResponseFromHosts(t *testing.T) {
 	flt, err := filtering.New(&filtering.Config{
 		Logger:               testLogger,
 		ApplyClientFiltering: applyEmptyClientFiltering,
-		BlockedServices:      emptyFilteringBlockedServices(),
 		BlockingMode:         filtering.BlockingModeDefault,
 		EtcHosts:             hc,
 	}, nil)

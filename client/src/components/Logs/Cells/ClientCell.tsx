@@ -6,18 +6,15 @@ import { useTranslation } from 'react-i18next';
 
 import { Link } from 'react-router-dom';
 
-import { checkFiltered, getBlockingClientName } from '../../../helpers/helpers';
+import { checkFiltered } from '../../../helpers/helpers';
 import { BLOCK_ACTIONS } from '../../../helpers/constants';
 
-import { toggleBlocking, toggleBlockingForClient } from '../../../actions';
+import { toggleBlocking } from '../../../actions';
 
 import IconTooltip from './IconTooltip';
 
 import { renderFormattedClientCell } from '../../../helpers/renderFormattedClientCell';
-import { toggleClientBlock } from '../../../actions/access';
-import { getBlockClientInfo } from './helpers';
 import { getStats } from '../../../actions/stats';
-import { updateLogs } from '../../../actions/queryLogs';
 import { RootState } from '../../../initialState';
 
 interface ClientCellProps {
@@ -45,12 +42,10 @@ const ClientCell = ({ client, client_id, client_info, domain, reason }: ClientCe
 
     const isDetailed = useSelector((state: RootState) => state.queryLogs.isDetailed);
 
-    const allowedClients = useSelector((state: RootState) => state.access.allowed_clients, shallowEqual);
     const [isOptionsOpened, setOptionsOpened] = useState(false);
 
     const autoClient = autoClients.find((autoClient: any) => autoClient.name === client);
 
-    const clients = useSelector((state: RootState) => state.dashboard.clients);
     const source = autoClient?.source;
     const whoisAvailable = client_info && Object.keys(client_info.whois).length > 0;
     const clientName = client_info?.name || client_id;
@@ -87,20 +82,6 @@ const ClientCell = ({ client, client_id, client_info, domain, reason }: ClientCe
     const renderBlockingButton = (isFiltered: any, domain: any) => {
         const buttonType = isFiltered ? BLOCK_ACTIONS.UNBLOCK : BLOCK_ACTIONS.BLOCK;
 
-        const {
-            confirmMessage,
-            buttonKey: blockingClientKey,
-            lastRuleInAllowlist,
-        } = getBlockClientInfo(
-            client,
-            client_info?.disallowed || false,
-            client_info?.disallowed_rule || '',
-            allowedClients,
-        );
-
-        const blockingForClientKey = isFiltered ? 'unblock_for_this_client_only' : 'block_for_this_client_only';
-        const clientNameBlockingFor = getBlockingClientName(clients, client);
-
         const onClick = async () => {
             await dispatch(toggleBlocking(buttonType, domain));
             await dispatch(getStats());
@@ -112,30 +93,6 @@ const ClientCell = ({ client, client_id, client_info, domain, reason }: ClientCe
                 name: buttonType,
                 onClick,
                 className: isFiltered ? 'bg--green' : 'bg--danger',
-            },
-            {
-                name: blockingForClientKey,
-                onClick: () => {
-                    dispatch(toggleBlockingForClient(buttonType, domain, clientNameBlockingFor));
-                    setOptionsOpened(false);
-                },
-            },
-            {
-                name: blockingClientKey,
-                onClick: async () => {
-                    if (window.confirm(confirmMessage)) {
-                        await dispatch(
-                            toggleClientBlock(
-                                client,
-                                client_info?.disallowed || false,
-                                client_info?.disallowed_rule || '',
-                            ),
-                        );
-                        await dispatch(updateLogs());
-                        setOptionsOpened(false);
-                    }
-                },
-                disabled: lastRuleInAllowlist,
             },
         ];
 

@@ -51,7 +51,6 @@ func TestServer_ServeDNS(t *testing.T) {
 		Logger:               testLogger,
 		ProtectionEnabled:    true,
 		ApplyClientFiltering: applyEmptyClientFiltering,
-		BlockedServices:      emptyFilteringBlockedServices(),
 		BlockingMode:         filtering.BlockingModeDefault,
 	}, filters)
 	require.NoError(t, err)

@@ -729,16 +729,6 @@ var resultHandlers = map[string]logEntryHandler{
 
 		return nil
 	},
-	"ServiceName": func(t json.Token, ent *logEntry) error {
-		s, ok := t.(string)
-		if !ok {
-			return nil
-		}
-
-		ent.Result.ServiceName = s
-
-		return nil
-	},
 	"CanonName": func(t json.Token, ent *logEntry) error {
 		s, ok := t.(string)
 		if !ok {

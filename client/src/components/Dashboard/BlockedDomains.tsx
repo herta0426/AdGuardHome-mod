@@ -26,7 +26,6 @@ interface BlockedDomainsProps {
     topBlockedDomains: unknown[];
     blockedFiltering: number;
     replacedSafebrowsing: number;
-    replacedSafesearch: number;
     replacedParental: number;
     refreshButton: React.ReactNode;
     subtitle: string;
@@ -41,9 +40,8 @@ const BlockedDomains = ({
     blockedFiltering,
     replacedSafebrowsing,
     replacedParental,
-    replacedSafesearch,
 }: BlockedDomainsProps) => {
-    const totalBlocked = blockedFiltering + replacedSafebrowsing + replacedParental + replacedSafesearch;
+    const totalBlocked = blockedFiltering + replacedSafebrowsing + replacedParental;
 
     return (
         <Card title={t('top_blocked_domains')} subtitle={subtitle} bodyType="card-table" refresh={refreshButton}>

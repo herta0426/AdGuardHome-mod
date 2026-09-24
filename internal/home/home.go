@@ -32,7 +32,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/hashprefix"
-	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
 	"github.com/AdguardTeam/AdGuardHome/internal/permcheck"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/stats"
@@ -545,17 +544,6 @@ func setupDNSFilteringConf(
 		conf.ParentalBlockHost = host
 	}
 
-	logger := baseLogger.With(slogutil.KeyPrefix, safesearch.LogPrefix)
-	conf.SafeSearch, err = safesearch.NewDefault(ctx, &safesearch.DefaultConfig{
-		Logger:         logger,
-		ServicesConfig: conf.SafeSearchConf,
-		CacheSize:      conf.SafeSearchCacheSize,
-		CacheTTL:       cacheTime,
-	})
-	if err != nil {
-		return fmt.Errorf("initializing safesearch: %w", err)
-	}
-
 	return nil
 }
 
@@ -798,11 +786,6 @@ func run(
 
 	err := configureOS(ctx, baseLogger, config)
 	fatalOnError(ctx, baseLogger, err)
-
-	// Clients package uses filtering package's static data
-	// (filtering.BlockedSvcKnown()), so we have to initialize filtering static
-	// data first, but also to avoid relying on automatic Go init() function.
-	filtering.InitModule(ctx, baseLogger)
 
 	confModifier := newDefaultConfigModifier(
 		config,

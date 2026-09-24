@@ -21,13 +21,12 @@ targets.  The main scripts are:
   linters;
 - `helper.sh`: shared helpers for the scripts above.
 
-## `blocked-services/`, `companiesdb/`, `vetted-filters/`
+## `companiesdb/`, `vetted-filters/`
 
 These updaters refresh the data files in `client/src/helpers/` from AdGuard's
 registries:
 
 ```sh
-go run ./scripts/blocked-services/main.go
 sh ./scripts/companiesdb/download.sh
 go run ./scripts/vetted-filters/main.go
 ```

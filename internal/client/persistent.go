@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghslog"
-	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
@@ -58,13 +57,6 @@ func (uid *UID) UnmarshalText(data []byte) error {
 
 // Persistent contains information about persistent clients.
 type Persistent struct {
-	// SafeSearch handles search engine hosts rewrites.
-	SafeSearch filtering.SafeSearch
-
-	// BlockedServices is the configuration of blocked services of a client.  It
-	// must not be nil after initialization.
-	BlockedServices *filtering.BlockedServices
-
 	// Name of the persistent client.  Must not be empty.
 	Name string
 
@@ -116,19 +108,11 @@ type Persistent struct {
 	// ParentalEnabled specifies whether parental control is enabled.
 	ParentalEnabled bool
 
-	// UseOwnBlockedServices specifies whether custom services are blocked.
-	UseOwnBlockedServices bool
-
 	// IgnoreQueryLog specifies whether the client requests are logged.
 	IgnoreQueryLog bool
 
 	// IgnoreStatistics  specifies whether the client requests are counted.
 	IgnoreStatistics bool
-
-	// SafeSearchConf is the safe search filtering configuration.
-	//
-	// TODO(d.kolyshev): Make SafeSearchConf a pointer.
-	SafeSearchConf filtering.SafeSearchConfig
 }
 
 // validate returns an error if persistent client information contains errors.
@@ -287,13 +271,12 @@ func (c *Persistent) EqualIDs(prev *Persistent) (equal bool) {
 		slices.Equal(c.ClientIDs, prev.ClientIDs)
 }
 
-// ShallowClone returns a deep copy of the client, except upstreamConfig,
-// safeSearchConf, SafeSearch fields, because it's difficult to copy them.
+// ShallowClone returns a deep copy of the client, except upstreamConfig field,
+// because it's difficult to copy it.
 func (c *Persistent) ShallowClone() (clone *Persistent) {
 	clone = &Persistent{}
 	*clone = *c
 
-	clone.BlockedServices = c.BlockedServices.Clone()
 	clone.Tags = slices.Clone(c.Tags)
 	clone.Upstreams = slices.Clone(c.Upstreams)
 

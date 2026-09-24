@@ -49,7 +49,6 @@ export const STATS_NAMES = {
     dns_queries: 'DNS queries',
     replaced_parental: 'stats_adult',
     replaced_safebrowsing: 'stats_malware_phishing',
-    replaced_safesearch: 'enforced_save_search',
 };
 
 export const STATUS_COLORS = {
@@ -83,14 +82,10 @@ export const SETTINGS_NAMES = {
     filtering: 'filtering',
     safebrowsing: 'safebrowsing',
     parental: 'parental',
-    safesearch: 'safesearch',
 };
 
 export const STANDARD_DNS_PORT = 53;
 export const STANDARD_WEB_PORT = 80;
-export const STANDARD_HTTPS_PORT = 443;
-export const DNS_OVER_TLS_PORT = 853;
-export const DNS_OVER_QUIC_PORT = 853;
 export const MIN_PORT = 1;
 export const MAX_PORT = 65535;
 
@@ -135,7 +130,6 @@ export const MENU_URLS = {
 };
 
 export const SETTINGS_URLS = {
-    encryption: '/encryption',
     dns: '/dns',
     settings: '/settings',
 };
@@ -145,12 +139,6 @@ export const FILTERS_URLS = {
     dns_allowlists: '/dns_allowlists',
     dns_rewrites: '/dns_rewrites',
     custom_rules: '/custom_rules',
-    blocked_services: '/blocked_services',
-};
-
-export const ENCRYPTION_SOURCE = {
-    PATH: 'path',
-    CONTENT: 'content',
 };
 
 export const FILTERED = 'Filtered';
@@ -216,11 +204,9 @@ export const FILTERED_STATUS = {
     FILTERED_BLACK_LIST: 'FilteredBlackList',
     NOT_FILTERED_WHITE_LIST: 'NotFilteredWhiteList',
     NOT_FILTERED_NOT_FOUND: 'NotFilteredNotFound',
-    FILTERED_BLOCKED_SERVICE: 'FilteredBlockedService',
     REWRITE: 'Rewrite',
     REWRITE_HOSTS: 'RewriteEtcHosts',
     REWRITE_RULE: 'RewriteRule',
-    FILTERED_SAFE_SEARCH: 'FilteredSafeSearch',
     FILTERED_SAFE_BROWSING: 'FilteredSafeBrowsing',
     FILTERED_PARENTAL: 'FilteredParental',
 };
@@ -242,18 +228,6 @@ export const RESPONSE_FILTER = {
         QUERY: 'blocked',
         LABEL: 'show_blocked_responses',
     },
-    BLOCKED_SERVICES: {
-        QUERY: 'blocked_services',
-        LABEL: 'blocked_services',
-    },
-    BLOCKED_THREATS: {
-        QUERY: 'blocked_safebrowsing',
-        LABEL: 'blocked_threats',
-    },
-    BLOCKED_ADULT_WEBSITES: {
-        QUERY: 'blocked_parental',
-        LABEL: 'blocked_adult_websites',
-    },
     ALLOWED: {
         QUERY: 'whitelisted',
         LABEL: 'allowed',
@@ -261,10 +235,6 @@ export const RESPONSE_FILTER = {
     REWRITTEN: {
         QUERY: 'rewritten',
         LABEL: 'rewritten',
-    },
-    SAFE_SEARCH: {
-        QUERY: 'safe_search',
-        LABEL: 'safe_search',
     },
 };
 
@@ -300,14 +270,6 @@ export const FILTERED_STATUS_TO_META_MAP = {
         LABEL: RESPONSE_FILTER.PROCESSED.LABEL,
         COLOR: QUERY_STATUS_COLORS.WHITE,
     },
-    [FILTERED_STATUS.FILTERED_BLOCKED_SERVICE]: {
-        LABEL: 'blocked_service',
-        COLOR: QUERY_STATUS_COLORS.RED,
-    },
-    [FILTERED_STATUS.FILTERED_SAFE_SEARCH]: {
-        LABEL: RESPONSE_FILTER.SAFE_SEARCH.LABEL,
-        COLOR: QUERY_STATUS_COLORS.YELLOW,
-    },
     [FILTERED_STATUS.FILTERED_BLACK_LIST]: {
         LABEL: RESPONSE_FILTER.BLOCKED.LABEL,
         COLOR: QUERY_STATUS_COLORS.RED,
@@ -325,11 +287,11 @@ export const FILTERED_STATUS_TO_META_MAP = {
         COLOR: QUERY_STATUS_COLORS.BLUE,
     },
     [FILTERED_STATUS.FILTERED_SAFE_BROWSING]: {
-        LABEL: RESPONSE_FILTER.BLOCKED_THREATS.LABEL,
+        LABEL: 'blocked_threats',
         COLOR: QUERY_STATUS_COLORS.YELLOW,
     },
     [FILTERED_STATUS.FILTERED_PARENTAL]: {
-        LABEL: RESPONSE_FILTER.BLOCKED_ADULT_WEBSITES.LABEL,
+        LABEL: 'blocked_adult_websites',
         COLOR: QUERY_STATUS_COLORS.YELLOW,
     },
 };
@@ -362,10 +324,8 @@ export const DETAILED_DATE_FORMAT_OPTIONS = {
 export const SPECIAL_FILTER_ID = {
     CUSTOM_FILTERING_RULES: 0,
     SYSTEM_HOSTS: -1,
-    BLOCKED_SERVICES: -2,
     PARENTAL: -3,
     SAFE_BROWSING: -4,
-    SAFE_SEARCH: -5,
 };
 
 export const BLOCK_ACTIONS = {
@@ -393,19 +353,13 @@ export const FORM_NAME = {
     FILTER: 'filter',
     REWRITES: 'rewrites',
     LOGS_FILTER: 'logsFilter',
-    CLIENT: 'client',
-    LEASE: 'lease',
-    ACCESS: 'access',
     BLOCKING_MODE: 'blockingMode',
-    ENCRYPTION: 'encryption',
     FILTER_CONFIG: 'filterConfig',
     LOG_CONFIG: 'logConfig',
-    SERVICES: 'services',
     STATS_CONFIG: 'statsConfig',
     INSTALL: 'install',
     LOGIN: 'login',
     CACHE: 'cache',
-    MOBILE_CONFIG: 'mobileConfig',
 };
 
 export const SMALL_SCREEN_SIZE = 767;
@@ -457,11 +411,6 @@ export const CACHE_CONFIG_FIELDS = {
 
 export const isFirefox = navigator.userAgent.indexOf('Firefox') !== -1;
 export const COMMENT_LINE_DEFAULT_TOKEN = '#';
-
-export const MOBILE_CONFIG_LINKS = {
-    DOT: 'apple/dot.mobileconfig',
-    DOH: 'apple/doh.mobileconfig',
-};
 
 // Timings for disable protection in milliseconds
 export const DISABLE_PROTECTION_TIMINGS = {

@@ -708,18 +708,9 @@ func (d *DNSFilter) enableFiltersLocked(ctx context.Context, async bool) {
 }
 
 // ApplyAdditionalFiltering enhances the provided filtering settings with
-// blocked services and client-specific configurations.
+// client-specific configurations.
 func (d *DNSFilter) ApplyAdditionalFiltering(cliAddr netip.Addr, clientID string, setts *Settings) {
 	setts.ClientIP = cliAddr
 
-	d.ApplyBlockedServices(setts)
 	d.applyClientFiltering(clientID, cliAddr, setts)
-	if setts.BlockedServices != nil {
-		// TODO(e.burkov):  Get rid of this crutch.
-		setts.ServicesRules = nil
-		svcs := setts.BlockedServices.IDs
-		if !setts.BlockedServices.Schedule.Contains(time.Now()) {
-			d.ApplyBlockedServicesList(setts, svcs)
-		}
-	}
 }
