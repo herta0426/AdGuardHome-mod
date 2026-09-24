@@ -20,7 +20,6 @@ import {
     FILTERED_STATUS,
     R_CLIENT_ID,
     STANDARD_DNS_PORT,
-    STANDARD_HTTPS_PORT,
     STANDARD_WEB_PORT,
     SPECIAL_FILTER_ID,
     THEMES,
@@ -72,7 +71,6 @@ export const normalizeLogs = (logs: any) =>
             filterId,
             rule,
             rules,
-            service_name,
             original_answer,
             upstream,
             cached,
@@ -114,7 +112,6 @@ export const normalizeLogs = (logs: any) =>
             rule,
             rules: newRules,
             status,
-            service_name,
             originalAnswer: original_answer,
             originalResponse: processResponse(original_answer),
             tracker: getTrackerData(domain),
@@ -286,20 +283,6 @@ export const checkRedirect = (url: any, attempts: number = 1) => {
     return false;
 };
 
-export const redirectToCurrentProtocol = (values: any, httpPort = 80) => {
-    const { protocol, hostname, hash, port } = window.location;
-    const { enabled, force_https, port_https } = values;
-    const httpsPort = port_https !== STANDARD_HTTPS_PORT ? `:${port_https}` : '';
-
-    if (protocol !== 'https:' && enabled && force_https && port_https) {
-        checkRedirect(`https://${hostname}${httpsPort}/${hash}`);
-    } else if (protocol === 'https:' && enabled && port_https && port_https !== parseInt(port, 10)) {
-        checkRedirect(`https://${hostname}${httpsPort}/${hash}`);
-    } else if (protocol === 'https:' && (!enabled || !port_https)) {
-        window.location.replace(`http://${hostname}:${httpPort}/${hash}`);
-    }
-};
-
 /**
  * @param {string} text
  * @returns []string
@@ -378,10 +361,6 @@ export const sortClients = (clients: any) => {
     };
 
     return clients.sort(compare);
-};
-
-export const toggleAllServices = (services: any, change: any, isSelected: any) => {
-    services.forEach((service: any) => change(`blocked_services.${service.id}`, isSelected));
 };
 
 export const msToSeconds = (milliseconds: any) => Math.floor(milliseconds / 1000);
@@ -465,10 +444,8 @@ export const checkBlackList = (reason: any) => reason === FILTERED_STATUS.FILTER
 export const checkWhiteList = (reason: any) => reason === FILTERED_STATUS.NOT_FILTERED_WHITE_LIST;
 // eslint-disable-next-line max-len
 export const checkNotFilteredNotFound = (reason: any) => reason === FILTERED_STATUS.NOT_FILTERED_NOT_FOUND;
-export const checkSafeSearch = (reason: any) => reason === FILTERED_STATUS.FILTERED_SAFE_SEARCH;
 export const checkSafeBrowsing = (reason: any) => reason === FILTERED_STATUS.FILTERED_SAFE_BROWSING;
 export const checkParental = (reason: any) => reason === FILTERED_STATUS.FILTERED_PARENTAL;
-export const checkBlockedService = (reason: any) => reason === FILTERED_STATUS.FILTERED_BLOCKED_SERVICE;
 
 export const getCurrentFilter = (url: any, filters: any) => {
     const filter = filters?.find((item: any) => url === item.url);
@@ -833,14 +810,10 @@ export const getSpecialFilterName = (filterId: any) => {
             return i18n.t('custom_filter_rules');
         case SPECIAL_FILTER_ID.SYSTEM_HOSTS:
             return i18n.t('system_host_files');
-        case SPECIAL_FILTER_ID.BLOCKED_SERVICES:
-            return i18n.t('blocked_services');
         case SPECIAL_FILTER_ID.PARENTAL:
             return i18n.t('parental_control');
         case SPECIAL_FILTER_ID.SAFE_BROWSING:
             return i18n.t('safe_browsing');
-        case SPECIAL_FILTER_ID.SAFE_SEARCH:
-            return i18n.t('safe_search');
         default:
             return i18n.t('unknown_filter', { filterId });
     }
@@ -933,47 +906,8 @@ export const isScrolledIntoView = (el: any) => {
 };
 
 /**
- * If this is a manually created client, return its name.
- * If this is a "runtime" client, return it's IP address.
- * @param clients {Array.<object>}
- * @param ip {string}
- * @returns {string}
- */
-export const getBlockingClientName = (clients: any, ip: any) => {
-    for (let i = 0; i < clients.length; i += 1) {
-        const client = clients[i];
-
-        if (client.ids.includes(ip)) {
-            return client.name;
-        }
-    }
-    return ip;
-};
-
-/**
  * @param {string[]} lines
  * @returns {string[]}
  */
 export const filterOutComments = (lines: any) =>
     lines.filter((line: any) => !line.startsWith(COMMENT_LINE_DEFAULT_TOKEN));
-
-/**
- * @param {array} services
- * @param {string} id
- * @returns {string}
- */
-export const getService = (services: any, id: any) => services.find((s: any) => s.id === id);
-
-/**
- * @param {array} services
- * @param {string} id
- * @returns {string}
- */
-export const getServiceName = (services: any, id: any) => getService(services, id)?.name;
-
-/**
- * @param {array} services
- * @param {string} id
- * @returns {string}
- */
-export const getServiceIcon = (services: any, id: any) => getService(services, id)?.icon_svg;

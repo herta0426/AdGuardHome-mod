@@ -13,7 +13,6 @@ import (
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/testutil"
-	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -41,9 +40,7 @@ func newForTest(t testing.TB, c *Config, filters []Filter) (f *DNSFilter, setts 
 		c.Logger = cmp.Or(c.Logger, testLogger)
 		c.SafeBrowsingCacheSize = 10000
 		c.ParentalCacheSize = 10000
-		c.SafeSearchCacheSize = 1000
 		c.CacheTime = 30
-		setts.SafeSearchEnabled = c.SafeSearchConf.Enabled
 		setts.SafeBrowsingEnabled = c.SafeBrowsingEnabled
 		setts.ParentalEnabled = c.ParentalEnabled
 	} else {
@@ -599,12 +596,6 @@ func applyClientSettings(setts *Settings) {
 	setts.FilteringEnabled = false
 	setts.ParentalEnabled = false
 	setts.SafeBrowsingEnabled = true
-
-	rule, _ := rules.NewNetworkRule("||facebook.com^", 0)
-	s := ServiceEntry{}
-	s.Name = "facebook"
-	s.Rules = []*rules.NetworkRule{rule}
-	setts.ServicesRules = append(setts.ServicesRules, s)
 }
 
 func TestClientSettings(t *testing.T) {
@@ -643,11 +634,6 @@ func TestClientSettings(t *testing.T) {
 		host:       sbBlocked,
 		before:     false,
 		wantReason: FilteredSafeBrowsing,
-	}, {
-		name:       "additional_rules",
-		host:       "facebook.com",
-		before:     false,
-		wantReason: FilteredBlockedService,
 	}}
 
 	makeTester := func(tc testCase, before bool) func(t *testing.T) {

@@ -124,10 +124,4 @@ func TestIDs(t *testing.T) {
 	// Use a variable to prevent compilation errors.
 	id := rulelist.IDCustom
 	assert.Equal(t, rulelist.APIIDCustom, rulelist.APIID(id))
-
-	id = rulelist.IDBlockedService
-	assert.Equal(t, rulelist.APIIDBlockedService, rulelist.APIID(id))
-
-	id = rulelist.IDSafeSearch
-	assert.Equal(t, rulelist.APIIDSafeSearch, rulelist.APIID(id))
 }

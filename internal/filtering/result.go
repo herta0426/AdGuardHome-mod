@@ -20,10 +20,6 @@ type Result struct {
 	// unless Reason is set to Rewritten or RewrittenRule.
 	CanonName string `json:",omitempty"`
 
-	// ServiceName is the name of the blocked service.  It is empty unless
-	// Reason is set to FilteredBlockedService.
-	ServiceName string `json:",omitempty"`
-
 	// IPList is the lookup rewrite result.  It is empty unless Reason is set to
 	// Rewritten.
 	IPList []netip.Addr `json:",omitempty"`
@@ -46,7 +42,7 @@ type ResultRule struct {
 	Text string `json:",omitempty"`
 
 	// IP is the host IP.  It is nil unless the rule uses the /etc/hosts syntax
-	// or the reason is [FilteredSafeSearch].
+	// or the rule is a rewrite.
 	IP netip.Addr `json:",omitzero"`
 
 	// FilterListID is the ID of the rule's filter list.

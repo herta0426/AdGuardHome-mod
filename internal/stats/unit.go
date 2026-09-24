@@ -47,7 +47,12 @@ const (
 	RNotFiltered Result = iota + 1
 	RFiltered
 	RSafeBrowsing
-	RSafeSearch
+
+	// The value 4 is reserved.  It was used by the removed safe search
+	// filter and is kept as a placeholder to preserve the numbering of the
+	// results stored in the statistics file.
+	_ // RSafeSearch
+
 	RParental
 
 	resultLast = RParental + 1
@@ -462,14 +467,12 @@ func (s *StatsCtx) dataFromUnits(units []*unitDB, curID uint32) (resp *StatsResp
 		}
 		sum.NResult[RFiltered] += u.NResult[RFiltered]
 		sum.NResult[RSafeBrowsing] += u.NResult[RSafeBrowsing]
-		sum.NResult[RSafeSearch] += u.NResult[RSafeSearch]
 		sum.NResult[RParental] += u.NResult[RParental]
 	}
 
 	resp.NumDNSQueries = sum.NTotal
 	resp.NumBlockedFiltering = sum.NResult[RFiltered]
 	resp.NumReplacedSafebrowsing = sum.NResult[RSafeBrowsing]
-	resp.NumReplacedSafesearch = sum.NResult[RSafeSearch]
 	resp.NumReplacedParental = sum.NResult[RParental]
 
 	if timeN != 0 {

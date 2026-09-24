@@ -61,9 +61,7 @@ func (s *Server) filterDNSRequest(
 	}
 
 	switch res.Reason {
-	case
-		filtering.FilteredSafeSearch,
-		filtering.Rewritten:
+	case filtering.Rewritten:
 		pctx.Res = s.getCNAMEWithIPs(ctx, req, res.IPList, res.CanonName)
 	case
 		filtering.RewrittenAutoHosts,
@@ -81,7 +79,6 @@ func (s *Server) filterDNSRequest(
 func isRewrittenCNAME(res *filtering.Result) (ok bool) {
 	switch res.Reason {
 	case
-		filtering.FilteredSafeSearch,
 		filtering.Rewritten,
 		filtering.RewrittenRule:
 		return res.CanonName != "" && len(res.IPList) == 0

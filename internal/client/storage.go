@@ -792,10 +792,6 @@ func (s *Storage) ApplyClientFiltering(id string, addr netip.Addr, setts *filter
 
 	s.logger.Debug("applying custom client filtering settings", "client_name", c.Name)
 
-	if c.UseOwnBlockedServices {
-		setts.BlockedServices = c.BlockedServices.Clone()
-	}
-
 	setts.ClientName = c.Name
 	setts.ClientTags = slices.Clone(c.Tags)
 	if !c.UseOwnSettings {
@@ -803,8 +799,6 @@ func (s *Storage) ApplyClientFiltering(id string, addr netip.Addr, setts *filter
 	}
 
 	setts.FilteringEnabled = c.FilteringEnabled
-	setts.SafeSearchEnabled = c.SafeSearchConf.Enabled
-	setts.ClientSafeSearch = c.SafeSearch
 	setts.SafeBrowsingEnabled = c.SafeBrowsingEnabled
 	setts.ParentalEnabled = c.ParentalEnabled
 }

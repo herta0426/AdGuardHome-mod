@@ -273,7 +273,6 @@ run_linter "$go" tool fieldalignment \
 	./internal/filtering/hashprefix/ \
 	./internal/filtering/rewrite/ \
 	./internal/filtering/rulelist/ \
-	./internal/filtering/safesearch/ \
 	./internal/ipset/ \
 	./internal/ossvc/ \
 	./internal/querylog/ \
@@ -306,7 +305,6 @@ run_linter "$go" tool gosec --exclude=G115 --fmt=golint --quiet \
 	./internal/filtering/hashprefix/ \
 	./internal/filtering/rewrite/ \
 	./internal/filtering/rulelist/ \
-	./internal/filtering/safesearch/ \
 	./internal/ipset/ \
 	./internal/ossvc/ \
 	./internal/rdns/ \

@@ -124,14 +124,6 @@
     line-height: 1.7;
 }
 
-.encryption__list {
-    padding-left: 0;
-}
-
-.encryption__list li {
-    list-style: inside;
-}
-
 .btn-icon {
     display: inline-flex;
     align-items: center;

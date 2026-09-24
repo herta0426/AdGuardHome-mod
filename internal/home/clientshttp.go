@@ -10,9 +10,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
-	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
-	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
-	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 )
@@ -35,27 +32,17 @@ type clientJSON struct {
 	DisallowedRule *string `json:"disallowed_rule,omitempty"`
 
 	// WHOIS is the filtered WHOIS data of a client.
-	WHOIS          *whois.Info                 `json:"whois_info,omitempty"`
-	SafeSearchConf *filtering.SafeSearchConfig `json:"safe_search"`
+	WHOIS *whois.Info `json:"whois_info,omitempty"`
+	Name  string      `json:"name"`
 
-	// Schedule is blocked services schedule for every day of the week.
-	Schedule *schedule.Weekly `json:"blocked_services_schedule"`
-
-	Name string `json:"name"`
-
-	// BlockedServices is the names of blocked services.
-	BlockedServices []string `json:"blocked_services"`
-	IDs             []string `json:"ids"`
-	Tags            []string `json:"tags"`
-	Upstreams       []string `json:"upstreams"`
+	IDs       []string `json:"ids"`
+	Tags      []string `json:"tags"`
+	Upstreams []string `json:"upstreams"`
 
 	FilteringEnabled    bool `json:"filtering_enabled"`
 	ParentalEnabled     bool `json:"parental_enabled"`
 	SafeBrowsingEnabled bool `json:"safebrowsing_enabled"`
-	// Deprecated: use safeSearchConf.
-	SafeSearchEnabled        bool `json:"safesearch_enabled"`
-	UseGlobalBlockedServices bool `json:"use_global_blocked_services"`
-	UseGlobalSettings        bool `json:"use_global_settings"`
+	UseGlobalSettings   bool `json:"use_global_settings"`
 
 	IgnoreQueryLog   aghalg.NullBool `json:"ignore_querylog"`
 	IgnoreStatistics aghalg.NullBool `json:"ignore_statistics"`
@@ -160,11 +147,6 @@ func initPrev(cj clientJSON, prev *client.Persistent) (c *client.Persistent, err
 		upsCacheSize = cj.UpstreamsCacheSize
 	}
 
-	svcs, err := copyBlockedServices(cj.Schedule, cj.BlockedServices, prev)
-	if err != nil {
-		return nil, fmt.Errorf("invalid blocked services: %w", err)
-	}
-
 	if (uid == client.UID{}) {
 		uid, err = client.NewUID()
 		if err != nil {
@@ -173,7 +155,6 @@ func initPrev(cj clientJSON, prev *client.Persistent) (c *client.Persistent, err
 	}
 
 	return &client.Persistent{
-		BlockedServices:       svcs,
 		UID:                   uid,
 		IgnoreQueryLog:        ignoreQueryLog,
 		IgnoreStatistics:      ignoreStatistics,
@@ -201,7 +182,6 @@ func (clients *clientsContainer) jsonToClient(
 		return nil, err
 	}
 
-	c.SafeSearchConf = copySafeSearch(cj.SafeSearchConf, cj.SafeSearchEnabled)
 	c.Name = cj.Name
 	c.Tags = cj.Tags
 	c.Upstreams = cj.Upstreams
@@ -209,96 +189,12 @@ func (clients *clientsContainer) jsonToClient(
 	c.FilteringEnabled = cj.FilteringEnabled
 	c.ParentalEnabled = cj.ParentalEnabled
 	c.SafeBrowsingEnabled = cj.SafeBrowsingEnabled
-	c.UseOwnBlockedServices = !cj.UseGlobalBlockedServices
-
-	if c.SafeSearchConf.Enabled {
-		logger := clients.baseLogger.With(
-			slogutil.KeyPrefix, safesearch.LogPrefix,
-			safesearch.LogKeyClient, c.Name,
-		)
-		var ss *safesearch.Default
-		ss, err = safesearch.NewDefault(ctx, &safesearch.DefaultConfig{
-			Logger:         logger,
-			ServicesConfig: c.SafeSearchConf,
-			ClientName:     c.Name,
-			CacheSize:      clients.safeSearchCacheSize,
-			CacheTTL:       clients.safeSearchCacheTTL,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("creating safesearch for client %q: %w", c.Name, err)
-		}
-
-		c.SafeSearch = ss
-	}
 
 	return c, nil
 }
 
-// copySafeSearch returns safe search config created from provided parameters.
-func copySafeSearch(
-	jsonConf *filtering.SafeSearchConfig,
-	enabled bool,
-) (conf filtering.SafeSearchConfig) {
-	if jsonConf != nil {
-		return *jsonConf
-	}
-
-	// TODO(d.kolyshev): Remove after cleaning the deprecated
-	// [clientJSON.SafeSearchEnabled] field.
-	conf = filtering.SafeSearchConfig{
-		Enabled: enabled,
-	}
-
-	// Set default service flags for enabled safesearch.
-	if conf.Enabled {
-		conf.Bing = true
-		conf.DuckDuckGo = true
-		conf.Ecosia = true
-		conf.Google = true
-		conf.Pixabay = true
-		conf.Yandex = true
-		conf.YouTube = true
-	}
-
-	return conf
-}
-
-// copyBlockedServices converts a json blocked services to an internal blocked
-// services.
-func copyBlockedServices(
-	sch *schedule.Weekly,
-	svcStrs []string,
-	prev *client.Persistent,
-) (svcs *filtering.BlockedServices, err error) {
-	var weekly *schedule.Weekly
-	if sch != nil {
-		weekly = sch.Clone()
-	} else if prev != nil {
-		weekly = prev.BlockedServices.Schedule.Clone()
-	} else {
-		weekly = schedule.EmptyWeekly()
-	}
-
-	svcs = &filtering.BlockedServices{
-		Schedule: weekly,
-		IDs:      svcStrs,
-	}
-
-	err = svcs.Validate()
-	if err != nil {
-		return nil, fmt.Errorf("validating blocked services: %w", err)
-	}
-
-	return svcs, nil
-}
-
 // clientToJSON converts persistent client object to JSON object.
 func clientToJSON(c *client.Persistent) (cj *clientJSON) {
-	// TODO(d.kolyshev): Remove after cleaning the deprecated
-	// [clientJSON.SafeSearchEnabled] field.
-	cloneVal := c.SafeSearchConf
-	safeSearchConf := &cloneVal
-
 	return &clientJSON{
 		Name:                c.Name,
 		IDs:                 c.Identifiers(),
@@ -306,14 +202,7 @@ func clientToJSON(c *client.Persistent) (cj *clientJSON) {
 		UseGlobalSettings:   !c.UseOwnSettings,
 		FilteringEnabled:    c.FilteringEnabled,
 		ParentalEnabled:     c.ParentalEnabled,
-		SafeSearchEnabled:   safeSearchConf.Enabled,
-		SafeSearchConf:      safeSearchConf,
 		SafeBrowsingEnabled: c.SafeBrowsingEnabled,
-
-		UseGlobalBlockedServices: !c.UseOwnBlockedServices,
-
-		Schedule:        c.BlockedServices.Schedule,
-		BlockedServices: c.BlockedServices.IDs,
 
 		Upstreams: c.Upstreams,
 

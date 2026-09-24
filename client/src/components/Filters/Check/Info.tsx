@@ -9,7 +9,6 @@ import {
     checkRewrite,
     checkRewriteHosts,
     checkWhiteList,
-    checkSafeSearch,
     checkSafeBrowsing,
     checkParental,
     getRulesToFilterList,
@@ -68,7 +67,6 @@ const getTitle = () => {
         [FILTERED_STATUS.REWRITE_HOSTS]: t('rewrite_hosts_applied'),
         [FILTERED_STATUS.FILTERED_BLACK_LIST]: ruleAndFilterNames,
         [FILTERED_STATUS.NOT_FILTERED_WHITE_LIST]: ruleAndFilterNames,
-        [FILTERED_STATUS.FILTERED_SAFE_SEARCH]: getReasonFiltered(reason),
         [FILTERED_STATUS.FILTERED_SAFE_BROWSING]: getReasonFiltered(reason),
         [FILTERED_STATUS.FILTERED_PARENTAL]: getReasonFiltered(reason),
     };
@@ -90,7 +88,7 @@ const getTitle = () => {
 };
 
 const Info = () => {
-    const { hostname, reason, service_name, cname, ip_addrs } = useSelector(
+    const { hostname, reason, cname, ip_addrs } = useSelector(
         (state: RootState) => state.filtering.check,
         shallowEqual,
     );
@@ -104,7 +102,7 @@ const Info = () => {
         'logs__row--green': checkWhiteList(reason),
     });
 
-    const onlyFiltered = checkSafeSearch(reason) || checkSafeBrowsing(reason) || checkParental(reason);
+    const onlyFiltered = checkSafeBrowsing(reason) || checkParental(reason);
 
     const isFiltered = checkFiltered(reason);
 
@@ -117,8 +115,6 @@ const Info = () => {
             <div>{title}</div>
             {!onlyFiltered && (
                 <>
-                    {service_name && <div>{t('check_service', { service: service_name })}</div>}
-
                     {cname && <div>{t('check_cname', { cname })}</div>}
 
                     {ip_addrs && <div>{t('check_ip', { ip: ip_addrs.join(', ') })}</div>}

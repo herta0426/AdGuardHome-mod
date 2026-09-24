@@ -36,12 +36,6 @@ import (
 	"github.com/miekg/dns"
 )
 
-// ServiceEntry - blocked service array element
-type ServiceEntry struct {
-	Name  string
-	Rules []*rules.NetworkRule
-}
-
 // Settings are custom filtering settings for a client.
 //
 // TODO(s.chzhen):  Move to the client package.
@@ -50,20 +44,10 @@ type Settings struct {
 	ClientIP   netip.Addr
 	ClientTags []string
 
-	ServicesRules []ServiceEntry
-
-	// BlockedServices is the configuration of blocked services of a client.  It
-	// is nil if the client does not have any blocked services.
-	BlockedServices *BlockedServices
-
 	ProtectionEnabled   bool
 	FilteringEnabled    bool
-	SafeSearchEnabled   bool
 	SafeBrowsingEnabled bool
 	ParentalEnabled     bool
-
-	// ClientSafeSearch is a client configured safe search.
-	ClientSafeSearch SafeSearch
 }
 
 // Resolver is the interface for net.Resolver to simplify testing.
@@ -89,16 +73,10 @@ type Config struct {
 	// ParentControl is the parental control hash-prefix checker.
 	ParentalControlChecker Checker `yaml:"-"`
 
-	SafeSearch SafeSearch `yaml:"-"`
-
 	// ApplyClientFiltering retrieves persistent client information using the
 	// ClientID or client IP address, and applies it to the filtering settings.
 	// It must not be nil.
 	ApplyClientFiltering func(clientID string, cliAddr netip.Addr, setts *Settings) `yaml:"-"`
-
-	// BlockedServices is the configuration of blocked services.
-	// Per-client settings can override this configuration.
-	BlockedServices *BlockedServices `yaml:"blocked_services"`
 
 	// EtcHosts is a container of IP-hostname pairs taken from the operating
 	// system configuration files (e.g. /etc/hosts).
@@ -122,8 +100,6 @@ type Config struct {
 	// ProtectionDisabledUntil is the timestamp until when the protection is
 	// disabled.
 	ProtectionDisabledUntil *time.Time `yaml:"protection_disabled_until"`
-
-	SafeSearchConf SafeSearchConfig `yaml:"safe_search"`
 
 	// DataDir is used to store filters' contents.
 	DataDir string `yaml:"-"`
@@ -160,7 +136,6 @@ type Config struct {
 	MaxHTTPSize datasize.ByteSize `yaml:"max_http_size"`
 
 	SafeBrowsingCacheSize uint `yaml:"safebrowsing_cache_size"` // (in bytes)
-	SafeSearchCacheSize   uint `yaml:"safesearch_cache_size"`   // (in bytes)
 	ParentalCacheSize     uint `yaml:"parental_cache_size"`     // (in bytes)
 	// TODO(a.garipov): Use timeutil.Duration
 	CacheTime uint `yaml:"cache_time"` // Element's TTL (in minutes)
@@ -227,11 +202,10 @@ type LookupStats struct {
 	PendingMax int64  // maximum number of pending HTTP requests
 }
 
-// Stats store LookupStats for safebrowsing, parental and safesearch
+// Stats store LookupStats for safebrowsing and parental.
 type Stats struct {
 	Safebrowsing LookupStats
 	Parental     LookupStats
-	Safesearch   LookupStats
 }
 
 // Parameters to pass to filters-initializer goroutine
@@ -267,8 +241,6 @@ type DNSFilter struct {
 
 	rulesStorageAllow    *filterlist.RuleStorage
 	filteringEngineAllow *urlfilter.DNSEngine
-
-	safeSearch SafeSearch
 
 	// safeBrowsingChecker is the safe browsing hash-prefix checker.
 	safeBrowsingChecker Checker
@@ -329,7 +301,6 @@ func (d *DNSFilter) Settings() (s *Settings) {
 
 	return &Settings{
 		FilteringEnabled:    atomic.LoadUint32(&d.conf.enabled) != 0,
-		SafeSearchEnabled:   d.conf.SafeSearchConf.Enabled,
 		SafeBrowsingEnabled: d.conf.SafeBrowsingEnabled,
 		ParentalEnabled:     d.conf.ParentalEnabled,
 	}
@@ -617,55 +588,6 @@ func (d *DNSFilter) handleRewriteLoop(
 	d.setRewriteResult(ctx, res, host, rewrites, qtype)
 
 	return *res
-}
-
-// matchBlockedServicesRules checks the host against the blocked services rules
-// in settings, if any.  err is always nil, it is only there to make this a
-// valid hostChecker function.
-func (d *DNSFilter) matchBlockedServicesRules(
-	host string,
-	_ uint16,
-	setts *Settings,
-) (res Result, err error) {
-	if !setts.ProtectionEnabled {
-		return Result{}, nil
-	}
-
-	svcs := setts.ServicesRules
-	if len(svcs) == 0 {
-		return Result{}, nil
-	}
-
-	req := rules.NewRequestForHostname(host)
-	for _, s := range svcs {
-		for _, rule := range s.Rules {
-			if rule.Match(req) {
-				res.Reason = FilteredBlockedService
-				res.IsFiltered = true
-				res.ServiceName = s.Name
-
-				ruleText := rule.Text()
-				res.Rules = []*ResultRule{{
-					// #nosec G115 -- The overflow is required for backwards
-					// compatibility.
-					FilterListID: rulelist.APIID(rule.GetFilterListID()),
-					Text:         ruleText,
-				}}
-
-				d.logger.DebugContext(
-					context.TODO(),
-					"blocked services matched rule",
-					"rule", ruleText,
-					"host", host,
-					"service", s.Name,
-				)
-
-				return res, nil
-			}
-		}
-	}
-
-	return res, nil
 }
 
 //
@@ -964,11 +886,6 @@ func makeResult(matchedRules []rules.Rule, reason Reason) (res Result) {
 	}
 }
 
-// InitModule manually initializes blocked services map.  l must not be nil.
-func InitModule(ctx context.Context, l *slog.Logger) {
-	initBlockedServices(ctx, l)
-}
-
 // New creates properly initialized DNS Filter that is ready to be used.  c must
 // be non-nil.
 func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
@@ -979,7 +896,6 @@ func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 		// #nosec G115 -- The Unix epoch time is highly unlikely to be negative.
 		idGen:                  newIDGenerator(uint64(time.Now().Unix()), c.Logger),
 		bufPool:                syncutil.NewSlicePool[byte](rulelist.DefaultRuleBufSize),
-		safeSearch:             c.SafeSearch,
 		refreshLock:            &sync.Mutex{},
 		safeBrowsingChecker:    c.SafeBrowsingChecker,
 		parentalControlChecker: c.ParentalControlChecker,
@@ -1000,17 +916,11 @@ func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 		check: d.matchHost,
 		name:  "filtering",
 	}, {
-		check: d.matchBlockedServicesRules,
-		name:  "blocked services",
-	}, {
 		check: d.checkSafeBrowsing,
 		name:  "safe browsing",
 	}, {
 		check: d.checkParental,
 		name:  "parental",
-	}, {
-		check: d.checkSafeSearch,
-		name:  "safe search",
 	}}
 
 	defer func() { err = errors.Annotate(err, "filtering: %w") }()
@@ -1021,14 +931,6 @@ func New(c *Config, blockFilters []Filter) (d *DNSFilter, err error) {
 	err = d.prepareRewrites(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("rewrites: preparing: %w", err)
-	}
-
-	if d.conf.BlockedServices != nil {
-		d.conf.BlockedServices.FilterUnknownIDs(ctx, d.logger)
-		err = d.conf.BlockedServices.Validate()
-		if err != nil {
-			return nil, fmt.Errorf("initializing blocked services: %w", err)
-		}
 	}
 
 	if blockFilters != nil {

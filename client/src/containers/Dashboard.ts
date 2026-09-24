@@ -2,14 +2,13 @@ import { connect } from 'react-redux';
 
 import { toggleProtection } from '../actions';
 import { getStats, getStatsConfig } from '../actions/stats';
-import { getAccessList } from '../actions/access';
 
 import Dashboard from '../components/Dashboard';
 import { RootState } from '../initialState';
 
 const mapStateToProps = (state: RootState) => {
-    const { dashboard, stats, access } = state;
-    const props = { dashboard, stats, access };
+    const { dashboard, stats } = state;
+    const props = { dashboard, stats };
     return props;
 };
 
@@ -17,14 +16,12 @@ type DispatchProps = {
     toggleProtection: (...args: unknown[]) => unknown;
     getStats: (...args: unknown[]) => unknown;
     getStatsConfig: (...args: unknown[]) => unknown;
-    getAccessList: () => (dispatch: any) => void;
 };
 
 const mapDispatchToProps: DispatchProps = {
     toggleProtection,
     getStats,
     getStatsConfig,
-    getAccessList,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(Dashboard);

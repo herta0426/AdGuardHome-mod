@@ -2,10 +2,7 @@ import { combineReducers } from 'redux';
 import { loadingBarReducer } from 'react-redux-loading-bar';
 
 import toasts from './toasts';
-import encryption from './encryption';
-import access from './access';
 import rewrites from './rewrites';
-import services from './services';
 import stats from './stats';
 import queryLogs from './queryLogs';
 import dnsConfig from './dnsConfig';
@@ -19,10 +16,7 @@ export default combineReducers({
     queryLogs,
     filtering,
     toasts,
-    encryption,
-    access,
     rewrites,
-    services,
     stats,
     dnsConfig,
     loadingBar: loadingBarReducer,

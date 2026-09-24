@@ -55,7 +55,6 @@ func TestDNSFilter_CheckHostRules_dnsrewrite(t *testing.T) {
 		Logger:                testLogger,
 		SafeBrowsingCacheSize: 10000,
 		ParentalCacheSize:     10000,
-		SafeSearchCacheSize:   1000,
 		CacheTime:             30,
 	}
 

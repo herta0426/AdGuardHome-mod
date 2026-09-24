@@ -13,8 +13,6 @@ import (
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
-	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
-	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
@@ -50,9 +48,6 @@ func newPersistentClient(name string) (c *client.Persistent) {
 	return &client.Persistent{
 		Name: name,
 		UID:  client.MustNewUID(),
-		BlockedServices: &filtering.BlockedServices{
-			Schedule: schedule.EmptyWeekly(),
-		},
 	}
 }
 

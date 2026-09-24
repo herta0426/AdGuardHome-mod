@@ -124,7 +124,6 @@ func TestStats(t *testing.T) {
 			NumDNSQueries:           2,
 			NumBlockedFiltering:     1,
 			NumReplacedSafebrowsing: 0,
-			NumReplacedSafesearch:   0,
 			NumReplacedParental:     0,
 			AvgProcessingTime:       0.123456,
 		}
