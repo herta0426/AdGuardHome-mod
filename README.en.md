@@ -146,6 +146,7 @@ After merging, run `make quick-build`, then push.  The workflow lints, tests, an
 ## Documentation
 
 - [Handover and maintenance notes](HANDOVER.md) (written in Chinese): local environment, builds and releases, syncing with the upstream, adding and removing features.
+- [Maintenance manual](MAINTENANCE.md) (written in Chinese): the day-to-day workflow, releases including pre-releases, the update source, syncing with the upstream, and troubleshooting.
 - [Upstream wiki](https://github.com/AdguardTeam/AdGuardHome/wiki)
 - [Upstream API description](https://github.com/AdguardTeam/AdGuardHome/tree/master/openapi)
 

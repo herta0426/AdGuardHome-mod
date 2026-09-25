@@ -145,6 +145,7 @@ git merge upstream/master
 ## 相关文档
 
 - [交接与维护文档](HANDOVER.md)：本地环境、构建与发版、同步上游、功能的增删改查。
+- [维护手册](MAINTENANCE.md)：日常改动流程、发版（含预发布）、在线更新源、上游同步与排错。
 - [上游 Wiki](https://github.com/AdguardTeam/AdGuardHome/wiki)
 - [上游 API 文档](https://github.com/AdguardTeam/AdGuardHome/tree/master/openapi)
 
