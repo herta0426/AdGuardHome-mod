@@ -61,7 +61,7 @@ Linux only:
 
 - Only `linux/amd64` (x86_64) and `linux/arm64` are supported and built.
 - The code and the build configuration for the other operating systems, the Snapcraft and Docker builds, the next-generation frontend, and the unfinished next API are removed.
-- Update checks are disabled, because the AdGuard update server only serves the official builds.  Setting a custom update URL still works.
+- Update checks use the mod's own update source: the AdGuard update server only serves the official builds, so the mod reads [`version.json`](version.json) from the repository root instead, and the release workflow rewrites it with the latest version and archive URL on every release.  Only the arm64 builds check for updates, since that is all the releases provide.
 
 Kept on purpose, not forgotten:
 
@@ -80,6 +80,8 @@ Releases carry the arm64 build only, since that is what the phones and the Magis
 - `checksums.txt` — SHA-256 hashes of the archives
 
 Download them from [Releases](https://github.com/liuzq2002/AdguardHome-Mod/releases).  The amd64 build is for local testing only and is not shipped in the releases; run the workflow from the Actions tab and download the `AdGuardHome-linux` artifact to get both the amd64 and the arm64 archives.
+
+The update section of the dashboard also reads from this repository: the binary fetches [`version.json`](version.json) from the repository root (`https://raw.githubusercontent.com/liuzq2002/AdguardHome-Mod/main/version.json`), and the release workflow rewrites that file with the new version, the release page URL, and the arm64 archive URL on every release.  So an installed build offers an upgrade to the next version.  If that URL is unreachable from your network, point the updater at a mirror instead; see the "换更新源" section of the [handover document](HANDOVER.md) (written in Chinese).
 
 ```sh
 tar -xzf AdGuardHome_linux_arm64.tar.gz
@@ -134,7 +136,7 @@ Most of the upstream changes merge cleanly.  The files below are changed on purp
 | `client/src/components/Settings/` | the modified general and DNS settings |
 | `client/src/components/ui/Footer.tsx` | the modified footer |
 | `.github/`, `Makefile`, `scripts/make/` | the Linux-only build and CI |
-| `internal/home/home.go` | the disabled update check |
+| `internal/home/home.go`, `internal/updater/` | the update source pointing at this repository's `version.json` |
 
 After merging, run `make quick-build`, then push.  The workflow lints, tests, and builds both architectures.
 

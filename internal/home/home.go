@@ -590,16 +590,29 @@ func isUpdateEnabled(
 		return false
 	}
 
-	// This build is an unofficial mod of AdGuard Home, and the official update
-	// server only serves the official builds, so updates are enabled only when
-	// a custom update URL is configured explicitly.
 	if isCustomURL {
 		l.DebugContext(ctx, "updates are enabled because custom url is used")
-	} else {
-		l.DebugContext(ctx, "updates are disabled for the mod builds")
+
+		return true
 	}
 
-	return isCustomURL
+	// The mod keeps its own version announcement file in the repository, see
+	// [updater.DefaultVersionURL].  Only the platform the mod actually
+	// publishes has an entry in it.
+	if runtime.GOOS != "linux" || runtime.GOARCH != "arm64" {
+		l.DebugContext(
+			ctx,
+			"updates are disabled for this platform",
+			"goos", runtime.GOOS,
+			"goarch", runtime.GOARCH,
+		)
+
+		return false
+	}
+
+	l.DebugContext(ctx, "updates are enabled for the mod builds")
+
+	return true
 }
 
 // webConfig is a configuration structure for webAPI.
@@ -1008,9 +1021,6 @@ func newUpdater(
 
 	var versionURL *url.URL
 	switch {
-	case version.Channel() == version.ChannelRelease:
-		// Only enable custom version URL for development builds.
-		l.DebugContext(ctx, "custom version url is disabled for release builds")
 	case !conf.UnsafeUseCustomUpdateIndexURL:
 		l.DebugContext(ctx, "custom version url is disabled in config")
 	default:
