@@ -4,7 +4,6 @@ import (
 	"context"
 	"net"
 	"net/netip"
-	"runtime"
 	"slices"
 	"sync"
 	"testing"
@@ -12,8 +11,6 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/arpdb"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
-	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
-	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
 	"github.com/AdguardTeam/golibs/errors"
@@ -93,25 +90,6 @@ func (c *testARPDB) Neighbors() (ns []arpdb.Neighbor) {
 	return c.onNeighbors()
 }
 
-// testDHCP is a mock implementation of the [client.DHCP].
-type testDHCP struct {
-	OnLeases func() (leases []*dhcpsvc.Lease)
-	OnHostBy func(ip netip.Addr) (host string)
-	OnMACBy  func(ip netip.Addr) (mac net.HardwareAddr)
-}
-
-// type check
-var _ client.DHCP = (*testDHCP)(nil)
-
-// Lease implements the [client.DHCP] interface for *testDHCP.
-func (t *testDHCP) Leases() (leases []*dhcpsvc.Lease) { return t.OnLeases() }
-
-// HostByIP implements the [client.DHCP] interface for *testDHCP.
-func (t *testDHCP) HostByIP(ip netip.Addr) (host string) { return t.OnHostBy(ip) }
-
-// MACByIP implements the [client.DHCP] interface for *testDHCP.
-func (t *testDHCP) MACByIP(ip netip.Addr) (mac net.HardwareAddr) { return t.OnMACBy(ip) }
-
 // compareRuntimeInfo is a helper function that returns true if the runtime
 // client has provided info.
 func compareRuntimeInfo(rc *client.Runtime, src client.Source, host string) (ok bool) {
@@ -143,7 +121,6 @@ func TestStorage_Add_hostsfile(t *testing.T) {
 	storage, err := client.NewStorage(ctx, &client.StorageConfig{
 		BaseLogger:             testLogger,
 		Logger:                 testLogger,
-		DHCP:                   client.EmptyDHCP{},
 		EtcHosts:               h,
 		ARPClientsUpdatePeriod: testTimeout / 10,
 	})
@@ -225,7 +202,6 @@ func TestStorage_Add_arp(t *testing.T) {
 	storage, err := client.NewStorage(ctx, &client.StorageConfig{
 		BaseLogger:             testLogger,
 		Logger:                 testLogger,
-		DHCP:                   client.EmptyDHCP{},
 		ARPDB:                  a,
 		ARPClientsUpdatePeriod: testTimeout / 10,
 	})
@@ -290,7 +266,6 @@ func TestStorage_Add_whois(t *testing.T) {
 	storage, err := client.NewStorage(ctx, &client.StorageConfig{
 		BaseLogger: testLogger,
 		Logger:     testLogger,
-		DHCP:       client.EmptyDHCP{},
 	})
 	require.NoError(t, err)
 
@@ -333,219 +308,6 @@ func TestStorage_Add_whois(t *testing.T) {
 	})
 }
 
-func TestClientsDHCP(t *testing.T) {
-	var (
-		cliIP1   = netip.MustParseAddr("1.1.1.1")
-		cliName1 = "one.dhcp"
-
-		cliIP2   = netip.MustParseAddr("2.2.2.2")
-		cliMAC2  = errors.Must(net.ParseMAC("22:22:22:22:22:22"))
-		cliName2 = "two.dhcp"
-
-		cliIP3   = netip.MustParseAddr("3.3.3.3")
-		cliMAC3  = errors.Must(net.ParseMAC("33:33:33:33:33:33"))
-		cliName3 = "three.dhcp"
-
-		prsCliIP   = netip.MustParseAddr("4.3.2.1")
-		prsCliMAC  = errors.Must(net.ParseMAC("AA:AA:AA:AA:AA:AA"))
-		prsCliName = "persistent.dhcp"
-
-		otherARPCliName = "other.arp"
-		otherARPCliIP   = netip.MustParseAddr("192.0.2.1")
-	)
-
-	ipToHost := map[netip.Addr]string{
-		cliIP1: cliName1,
-	}
-	ipToMAC := map[netip.Addr]net.HardwareAddr{
-		prsCliIP: prsCliMAC,
-	}
-
-	leases := []*dhcpsvc.Lease{{
-		IP:       cliIP2,
-		Hostname: cliName2,
-		HWAddr:   cliMAC2,
-	}, {
-		IP:       cliIP3,
-		Hostname: cliName3,
-		HWAddr:   cliMAC3,
-	}}
-
-	arpCh := make(chan []arpdb.Neighbor, 1)
-	arpDB := &testARPDB{
-		onRefresh: func(_ context.Context) (err error) { return nil },
-		onNeighbors: func() (ns []arpdb.Neighbor) {
-			select {
-			case ns = <-arpCh:
-				return ns
-			default:
-				return nil
-			}
-		},
-	}
-
-	dhcp := &testDHCP{
-		OnLeases: func() (ls []*dhcpsvc.Lease) {
-			return leases
-		},
-		OnHostBy: func(ip netip.Addr) (host string) {
-			return ipToHost[ip]
-		},
-		OnMACBy: func(ip netip.Addr) (mac net.HardwareAddr) {
-			return ipToMAC[ip]
-		},
-	}
-
-	etcHostsCh := make(chan *hostsfile.DefaultStorage, 1)
-	etcHosts := &testHostsContainer{
-		onUpd: func() (updates <-chan *hostsfile.DefaultStorage) {
-			return etcHostsCh
-		},
-	}
-
-	ctx := testutil.ContextWithTimeout(t, testTimeout)
-	storage, err := client.NewStorage(ctx, &client.StorageConfig{
-		BaseLogger:             testLogger,
-		Logger:                 testLogger,
-		ARPDB:                  arpDB,
-		DHCP:                   dhcp,
-		EtcHosts:               etcHosts,
-		RuntimeSourceDHCP:      true,
-		ARPClientsUpdatePeriod: testTimeout / 10,
-	})
-	require.NoError(t, err)
-
-	servicetest.RequireRun(t, storage, testTimeout)
-
-	require.True(t, t.Run("find_runtime_lower_priority", func(t *testing.T) {
-		// Add a lower-priority client.
-		ns := []arpdb.Neighbor{{
-			Name: cliName1,
-			IP:   cliIP1,
-		}}
-
-		testutil.RequireSend(t, arpCh, ns, testTimeout)
-
-		storage.ReloadARP(testutil.ContextWithTimeout(t, testTimeout))
-
-		cli1 := storage.ClientRuntime(cliIP1)
-		require.NotNil(t, cli1)
-
-		assert.True(t, compareRuntimeInfo(cli1, client.SourceDHCP, cliName1))
-
-		// Remove the matching client.
-		//
-		// TODO(a.garipov):  Consider adding ways of explicitly clearing runtime
-		// sources by source.
-		ns = []arpdb.Neighbor{{
-			Name: otherARPCliName,
-			IP:   otherARPCliIP,
-		}}
-
-		testutil.RequireSend(t, arpCh, ns, testTimeout)
-
-		storage.ReloadARP(testutil.ContextWithTimeout(t, testTimeout))
-	}))
-
-	require.True(t, t.Run("find_runtime", func(t *testing.T) {
-		cli1 := storage.ClientRuntime(cliIP1)
-		require.NotNil(t, cli1)
-
-		assert.True(t, compareRuntimeInfo(cli1, client.SourceDHCP, cliName1))
-	}))
-
-	require.True(t, t.Run("find_runtime_higher_priority", func(t *testing.T) {
-		// Add a higher-priority client.
-		s, strgErr := hostsfile.NewDefaultStorage(ctx, &hostsfile.DefaultStorageConfig{
-			Logger: testLogger,
-		})
-		require.NoError(t, strgErr)
-
-		s.Add(ctx, &hostsfile.Record{
-			Addr:  cliIP1,
-			Names: []string{cliName1},
-		})
-
-		testutil.RequireSend(t, etcHostsCh, s, testTimeout)
-
-		cli1 := storage.ClientRuntime(cliIP1)
-		require.NotNil(t, cli1)
-
-		require.EventuallyWithT(t, func(ct *assert.CollectT) {
-			cli := storage.ClientRuntime(cliIP1)
-			require.NotNil(ct, cli)
-
-			assert.True(ct, compareRuntimeInfo(cli, client.SourceHostsFile, cliName1))
-		}, testTimeout, testTimeout/10)
-
-		// Remove the matching client.
-		//
-		// TODO(a.garipov):  Consider adding ways of explicitly clearing runtime
-		// sources by source.
-		s, strgErr = hostsfile.NewDefaultStorage(ctx, &hostsfile.DefaultStorageConfig{
-			Logger: testLogger,
-		})
-		require.NoError(t, strgErr)
-
-		testutil.RequireSend(t, etcHostsCh, s, testTimeout)
-
-		require.EventuallyWithT(t, func(ct *assert.CollectT) {
-			cli := storage.ClientRuntime(cliIP1)
-			require.NotNil(ct, cli)
-
-			assert.True(ct, compareRuntimeInfo(cli, client.SourceDHCP, cliName1))
-		}, testTimeout, testTimeout/10)
-	}))
-
-	require.True(t, t.Run("find_persistent", func(t *testing.T) {
-		err = storage.Add(ctx, &client.Persistent{
-			Name: prsCliName,
-			UID:  client.MustNewUID(),
-			MACs: []net.HardwareAddr{prsCliMAC},
-		})
-		require.NoError(t, err)
-
-		params := &client.FindParams{}
-		err = params.Set(prsCliIP.String())
-		require.NoError(t, err)
-
-		prsCli, ok := storage.Find(params)
-		require.True(t, ok)
-
-		assert.Equal(t, prsCliName, prsCli.Name)
-	}))
-
-	require.True(t, t.Run("leases", func(t *testing.T) {
-		delete(ipToHost, cliIP1)
-		storage.UpdateDHCP(ctx)
-
-		cli1 := storage.ClientRuntime(cliIP1)
-		require.Nil(t, cli1)
-
-		for i, l := range leases {
-			cli := storage.ClientRuntime(l.IP)
-			require.NotNil(t, cli)
-
-			src, host := cli.Info()
-			assert.Equal(t, client.SourceDHCP, src)
-			assert.Equal(t, leases[i].Hostname, host)
-		}
-	}))
-
-	require.True(t, t.Run("range", func(t *testing.T) {
-		s := 0
-		storage.RangeRuntime(func(rc *client.Runtime) (cont bool) {
-			if src, _ := rc.Info(); src == client.SourceDHCP {
-				s++
-			}
-
-			return true
-		})
-
-		assert.Equal(t, len(leases), s)
-	}))
-}
-
 func TestClientsAddExisting(t *testing.T) {
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 
@@ -553,7 +315,6 @@ func TestClientsAddExisting(t *testing.T) {
 		storage, err := client.NewStorage(ctx, &client.StorageConfig{
 			BaseLogger: testLogger,
 			Logger:     testLogger,
-			DHCP:       client.EmptyDHCP{},
 		})
 		require.NoError(t, err)
 
@@ -574,65 +335,6 @@ func TestClientsAddExisting(t *testing.T) {
 		rc := storage.ClientRuntime(ip)
 		assert.True(t, compareRuntimeInfo(rc, client.SourceRDNS, "test"))
 	})
-
-	t.Run("complicated", func(t *testing.T) {
-		// TODO(a.garipov): Properly decouple the DHCP server from the client
-		// storage.
-		if runtime.GOOS == "windows" {
-			t.Skip("skipping dhcp test on windows")
-		}
-
-		// First, init a DHCP server with a single static lease.
-		config := &dhcpd.ServerConfig{
-			Logger:  testLogger,
-			Enabled: true,
-			DataDir: t.TempDir(),
-			Conf4: dhcpd.V4ServerConf{
-				Enabled:    true,
-				GatewayIP:  netip.MustParseAddr("1.2.3.1"),
-				SubnetMask: netip.MustParseAddr("255.255.255.0"),
-				RangeStart: netip.MustParseAddr("1.2.3.2"),
-				RangeEnd:   netip.MustParseAddr("1.2.3.10"),
-			},
-		}
-
-		ctx = testutil.ContextWithTimeout(t, testTimeout)
-		dhcpServer, err := dhcpd.Create(ctx, config)
-		require.NoError(t, err)
-
-		storage, err := client.NewStorage(ctx, &client.StorageConfig{
-			BaseLogger: testLogger,
-			Logger:     testLogger,
-			DHCP:       dhcpServer,
-		})
-		require.NoError(t, err)
-
-		ip := netip.MustParseAddr("1.2.3.4")
-
-		err = dhcpServer.AddStaticLease(&dhcpsvc.Lease{
-			HWAddr:   net.HardwareAddr{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA},
-			IP:       ip,
-			Hostname: "testhost",
-			Expiry:   time.Now().Add(time.Hour),
-		})
-		require.NoError(t, err)
-
-		// Add a new client with the same IP as for a client with MAC.
-		err = storage.Add(ctx, &client.Persistent{
-			Name: "client2",
-			UID:  client.MustNewUID(),
-			IPs:  []netip.Addr{ip},
-		})
-		require.NoError(t, err)
-
-		// Add a new client with the IP from the first client's IP range.
-		err = storage.Add(ctx, &client.Persistent{
-			Name: "client3",
-			UID:  client.MustNewUID(),
-			IPs:  []netip.Addr{netip.MustParseAddr("2.2.2.2")},
-		})
-		require.NoError(t, err)
-	})
 }
 
 // newStorage is a helper function that returns a client storage filled with
@@ -644,7 +346,6 @@ func newStorage(tb testing.TB, m []*client.Persistent) (s *client.Storage) {
 	s, err := client.NewStorage(ctx, &client.StorageConfig{
 		BaseLogger: testLogger,
 		Logger:     testLogger,
-		DHCP:       client.EmptyDHCP{},
 	})
 	require.NoError(tb, err)
 
@@ -1167,8 +868,7 @@ func TestStorage_CustomUpstreamConfig(t *testing.T) {
 		existingIP    = netip.MustParseAddr("192.0.2.1")
 		nonExistingIP = netip.MustParseAddr("192.0.2.255")
 
-		dhcpCliIP  = netip.MustParseAddr("192.0.2.2")
-		dhcpCliMAC = errors.Must(net.ParseMAC("02:00:00:00:00:00"))
+		cliMAC = errors.Must(net.ParseMAC("02:00:00:00:00:00"))
 
 		testUpstreamTimeout = time.Second
 	)
@@ -1182,24 +882,11 @@ func TestStorage_CustomUpstreamConfig(t *testing.T) {
 		},
 	}
 
-	ipToMAC := map[netip.Addr]net.HardwareAddr{
-		dhcpCliIP: dhcpCliMAC,
-	}
-
-	dhcp := &testDHCP{
-		OnLeases: func() (_ []*dhcpsvc.Lease) { panic(testutil.UnexpectedCall()) },
-		OnHostBy: func(ip netip.Addr) (_ string) { panic(testutil.UnexpectedCall(ip)) },
-		OnMACBy: func(ip netip.Addr) (mac net.HardwareAddr) {
-			return ipToMAC[ip]
-		},
-	}
-
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 	s, err := client.NewStorage(ctx, &client.StorageConfig{
 		BaseLogger: testLogger,
 		Logger:     testLogger,
 		Clock:      clock,
-		DHCP:       dhcp,
 	})
 	require.NoError(t, err)
 
@@ -1222,7 +909,7 @@ func TestStorage_CustomUpstreamConfig(t *testing.T) {
 
 	err = s.Add(ctx, &client.Persistent{
 		Name:      "client_second",
-		MACs:      []net.HardwareAddr{dhcpCliMAC},
+		MACs:      []net.HardwareAddr{cliMAC},
 		UID:       client.MustNewUID(),
 		Upstreams: []string{"192.0.2.0"},
 	})
@@ -1242,11 +929,6 @@ func TestStorage_CustomUpstreamConfig(t *testing.T) {
 		name:        "client_addr",
 		cliID:       "",
 		cliAddr:     existingIP,
-		wantNilConf: assert.NotNil,
-	}, {
-		name:        "client_dhcp",
-		cliID:       "",
-		cliAddr:     dhcpCliIP,
 		wantNilConf: assert.NotNil,
 	}, {
 		name:        "non_existing_client_id",

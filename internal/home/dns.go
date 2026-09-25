@@ -115,9 +115,7 @@ func initDNS(
 		QueryLog:    globalContext.queryLog,
 		PrivateNets: parseSubnetSet(config.DNS.PrivateNets),
 		Anonymizer:  anonymizer,
-		DHCPServer:  globalContext.dhcpServer,
 		EtcHosts:    hc,
-		LocalDomain: config.DHCP.LocalDomainName,
 		TLSManager:  tlsManager,
 	}
 

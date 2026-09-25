@@ -157,13 +157,7 @@ func createTestServer(
 
 	f.SetEnabled(true)
 
-	dhcp := &testDHCP{
-		OnEnabled:  func() (ok bool) { return false },
-		OnHostByIP: func(ip netip.Addr) (host string) { return "" },
-		OnIPByHost: func(host string) (_ netip.Addr) { panic(testutil.UnexpectedCall(host)) },
-	}
 	s, err = NewServer(DNSCreateParams{
-		DHCPServer:  dhcp,
 		DNSFilter:   f,
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
 		Logger:      testLogger,
@@ -992,13 +986,7 @@ func TestBlockedCustomIP(t *testing.T) {
 	}, filters)
 	require.NoError(t, err)
 
-	dhcp := &testDHCP{
-		OnEnabled:  func() (ok bool) { return false },
-		OnHostByIP: func(ip netip.Addr) (_ string) { panic(testutil.UnexpectedCall(ip)) },
-		OnIPByHost: func(host string) (_ netip.Addr) { panic(testutil.UnexpectedCall(host)) },
-	}
 	s, err := NewServer(DNSCreateParams{
-		DHCPServer:  dhcp,
 		DNSFilter:   f,
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
 		Logger:      testLogger,
@@ -1202,13 +1190,7 @@ func TestRewrite(t *testing.T) {
 
 	f.SetEnabled(true)
 
-	dhcp := &testDHCP{
-		OnEnabled:  func() (ok bool) { return false },
-		OnHostByIP: func(ip netip.Addr) (_ string) { panic(testutil.UnexpectedCall(ip)) },
-		OnIPByHost: func(host string) (_ netip.Addr) { panic(testutil.UnexpectedCall(host)) },
-	}
 	s, err := NewServer(DNSCreateParams{
-		DHCPServer:  dhcp,
 		DNSFilter:   f,
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
 		Logger:      testLogger,
@@ -1309,83 +1291,6 @@ func publicKey(priv any) any {
 	}
 }
 
-// testDHCP is a mock implementation of the [DHCP] interface.
-type testDHCP struct {
-	OnHostByIP func(ip netip.Addr) (host string)
-	OnIPByHost func(host string) (ip netip.Addr)
-	OnEnabled  func() (ok bool)
-}
-
-// type check
-var _ DHCP = (*testDHCP)(nil)
-
-// HostByIP implements the [DHCP] interface for *testDHCP.
-func (d *testDHCP) HostByIP(ip netip.Addr) (host string) { return d.OnHostByIP(ip) }
-
-// IPByHost implements the [DHCP] interface for *testDHCP.
-func (d *testDHCP) IPByHost(host string) (ip netip.Addr) { return d.OnIPByHost(host) }
-
-// IsClientHost implements the [DHCP] interface for *testDHCP.
-func (d *testDHCP) Enabled() (ok bool) { return d.OnEnabled() }
-
-func TestPTRResponseFromDHCPLeases(t *testing.T) {
-	const localDomain = "lan"
-
-	flt, err := filtering.New(&filtering.Config{
-		Logger:               testLogger,
-		ApplyClientFiltering: applyEmptyClientFiltering,
-		BlockingMode:         filtering.BlockingModeDefault,
-	}, nil)
-	require.NoError(t, err)
-
-	s, err := NewServer(DNSCreateParams{
-		DNSFilter: flt,
-		DHCPServer: &testDHCP{
-			OnEnabled:  func() (ok bool) { return true },
-			OnIPByHost: func(host string) (_ netip.Addr) { panic(testutil.UnexpectedCall(host)) },
-			OnHostByIP: func(ip netip.Addr) (host string) {
-				return "myhost"
-			},
-		},
-		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
-		Logger:      testLogger,
-		LocalDomain: localDomain,
-		TLSManager:  testTLSManager,
-	})
-	require.NoError(t, err)
-
-	s.conf.UDPListenAddrs = []*net.UDPAddr{{}}
-	s.conf.TCPListenAddrs = []*net.TCPAddr{{}}
-	s.conf.UpstreamDNS = []string{"127.0.0.1:53"}
-	s.conf.TLSConf = &TLSConfig{}
-	s.conf.Config.EDNSClientSubnet = &EDNSClientSubnet{Enabled: false}
-	s.conf.Config.ClientsContainer = EmptyClientsContainer{}
-	s.conf.Config.UpstreamMode = UpstreamModeLoadBalance
-
-	err = s.Prepare(testutil.ContextWithTimeout(t, testTimeout), &s.conf)
-	require.NoError(t, err)
-
-	err = s.Start(testutil.ContextWithTimeout(t, testTimeout))
-	require.NoError(t, err)
-	t.Cleanup(func() { s.Close(testutil.ContextWithTimeout(t, testTimeout)) })
-
-	addr := s.dnsProxy.Addr(proxy.ProtoUDP)
-	req := createTestMessageWithType("34.12.168.192.in-addr.arpa.", dns.TypePTR)
-
-	resp, err := dns.Exchange(req, addr.String())
-	require.NoErrorf(t, err, "%s", addr)
-
-	require.Len(t, resp.Answer, 1)
-
-	ans := resp.Answer[0]
-	assert.Equal(t, dns.TypePTR, ans.Header().Rrtype)
-	assert.Equal(t, "34.12.168.192.in-addr.arpa.", ans.Header().Name)
-
-	ptr := testutil.RequireTypeAssert[*dns.PTR](t, ans)
-
-	assert.Equal(t, dns.Fqdn("myhost."+localDomain), ptr.Ptr)
-}
-
 func TestPTRResponseFromHosts(t *testing.T) {
 	// Prepare test hosts file.
 
@@ -1396,12 +1301,6 @@ func TestPTRResponseFromHosts(t *testing.T) {
 		127.0.0.1   host # comment
 		::1         localhost#comment
 	`)},
-	}
-
-	dhcp := &testDHCP{
-		OnEnabled:  func() (ok bool) { return false },
-		OnIPByHost: func(host string) (_ netip.Addr) { panic(testutil.UnexpectedCall(host)) },
-		OnHostByIP: func(ip netip.Addr) (host string) { return "" },
 	}
 
 	var eventsCalledCounter atomic.Uint32
@@ -1436,7 +1335,6 @@ func TestPTRResponseFromHosts(t *testing.T) {
 
 	var s *Server
 	s, err = NewServer(DNSCreateParams{
-		DHCPServer:  dhcp,
 		DNSFilter:   flt,
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
 		Logger:      testLogger,
@@ -1499,29 +1397,6 @@ func TestNewServer(t *testing.T) {
 			Logger: testLogger,
 		},
 		wantErrMsg: "",
-	}, {
-		name: "success_local_tld",
-		in: DNSCreateParams{
-			Logger:      testLogger,
-			LocalDomain: "mynet",
-		},
-		wantErrMsg: "",
-	}, {
-		name: "success_local_domain",
-		in: DNSCreateParams{
-			Logger:      testLogger,
-			LocalDomain: "my.local.net",
-		},
-		wantErrMsg: "",
-	}, {
-		name: "bad_local_domain",
-		in: DNSCreateParams{
-			Logger:      testLogger,
-			LocalDomain: "!!!",
-		},
-		wantErrMsg: `local domain: bad domain name "!!!": ` +
-			`bad top-level domain name label "!!!": ` +
-			`bad top-level domain name label rune '!'`,
 	}}
 
 	for _, tc := range testCases {

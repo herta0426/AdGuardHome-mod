@@ -61,23 +61,6 @@ var (
 
 var webRegistered bool
 
-// DHCP is an interface for accessing DHCP lease data needed in this package.
-type DHCP interface {
-	// HostByIP returns the hostname of the DHCP client with the given IP
-	// address.  The address will be netip.Addr{} if there is no such client,
-	// due to an assumption that a DHCP client must always have an IP address.
-	HostByIP(ip netip.Addr) (host string)
-
-	// IPByHost returns the IP address of the DHCP client with the given
-	// hostname.  The hostname will be an empty string if there is no such
-	// client, due to an assumption that a DHCP client must always have a
-	// hostname, either set by the client or assigned automatically.
-	IPByHost(host string) (ip netip.Addr)
-
-	// Enabled returns true if DHCP provides information about clients.
-	Enabled() (ok bool)
-}
-
 // SystemResolvers is an interface for accessing the OS-provided resolvers.
 type SystemResolvers interface {
 	// Addrs returns the list of system resolvers' addresses.  Callers must
@@ -104,9 +87,6 @@ type Server struct {
 
 	// bootstrap is the resolver for upstreams' hostnames.
 	bootstrap upstream.Resolver
-
-	// dhcpServer is the DHCP server for accessing lease data.
-	dhcpServer DHCP
 
 	// etcHosts contains the current data from the system's hosts files.
 	etcHosts upstream.Resolver
@@ -163,10 +143,6 @@ type Server struct {
 	// some places where response mapping is needed (e.g. DHCP).
 	dns64Pref netip.Prefix
 
-	// localDomainSuffix is the suffix used to detect internal hosts.  It
-	// must be a valid domain name plus dots on each side.
-	localDomainSuffix string
-
 	// bootResolvers are the resolvers that should be used for
 	// bootstrapping along with [etcHosts].
 	//
@@ -188,18 +164,11 @@ type Server struct {
 	isRunning bool
 }
 
-// defaultLocalDomainSuffix is the default suffix used to detect internal hosts
-// when no suffix is provided.
-//
-// See the documentation for Server.localDomainSuffix.
-const defaultLocalDomainSuffix = "lan"
-
 // DNSCreateParams are parameters to create a new server.
 type DNSCreateParams struct {
 	DNSFilter   *filtering.DNSFilter
 	Stats       stats.Interface
 	QueryLog    querylog.QueryLog
-	DHCPServer  DHCP
 	PrivateNets netutil.SubnetSet
 	Anonymizer  *aghnet.IPMut
 	EtcHosts    *aghnet.HostsContainer
@@ -210,8 +179,6 @@ type DNSCreateParams struct {
 
 	// Logger is used as a base logger.  It must not be nil.
 	Logger *slog.Logger
-
-	LocalDomain string
 }
 
 // NewServer creates a new instance of the dnsforward.Server
@@ -220,18 +187,6 @@ type DNSCreateParams struct {
 // TODO(a.garipov): How many constructors and initializers does this thing have?
 // Refactor!
 func NewServer(p DNSCreateParams) (s *Server, err error) {
-	var localDomainSuffix string
-	if p.LocalDomain == "" {
-		localDomainSuffix = defaultLocalDomainSuffix
-	} else {
-		err = netutil.ValidateDomainName(p.LocalDomain)
-		if err != nil {
-			return nil, fmt.Errorf("local domain: %w", err)
-		}
-
-		localDomainSuffix = p.LocalDomain
-	}
-
 	if p.Anonymizer == nil {
 		p.Anonymizer = aghnet.NewIPMut(nil)
 	}
@@ -243,16 +198,13 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 
 	s = &Server{
 		dnsFilter:   p.DNSFilter,
-		dhcpServer:  p.DHCPServer,
 		stats:       p.Stats,
 		queryLog:    p.QueryLog,
 		privateNets: p.PrivateNets,
 		baseLogger:  p.Logger,
 		logger:      p.Logger.With(slogutil.KeyPrefix, "dnsforward"),
-		// TODO(e.burkov):  Use some case-insensitive string comparison.
-		localDomainSuffix: strings.ToLower(localDomainSuffix),
-		etcHosts:          etcHosts,
-		anonymizer:        p.Anonymizer,
+		etcHosts:    etcHosts,
+		anonymizer:  p.Anonymizer,
 		conf: ServerConfig{
 			ServePlainDNS: true,
 		},

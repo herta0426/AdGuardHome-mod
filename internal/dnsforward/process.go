@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"net"
 	"net/netip"
-	"strings"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -53,10 +52,6 @@ type dnsContext struct {
 
 	// responseAD shows if the response had the AD bit set.
 	responseAD bool
-
-	// isDHCPHost is true if the request for a local domain name and the DHCP is
-	// available for this request.
-	isDHCPHost bool
 }
 
 // resultCode is the result of a request processing function.
@@ -277,129 +272,6 @@ func (s *Server) appendDoTResolvers(req, resp *dns.Msg, domainName string) {
 	}
 }
 
-// processDHCPHosts respond to A requests if the target hostname is known to
-// the server.  It responds with a mapped IP address if the DNS64 is enabled and
-// the request is for AAAA.  l and dctx must not be nil.
-//
-// TODO(a.garipov): Adapt to AAAA as well.
-func (s *Server) processDHCPHosts(
-	ctx context.Context,
-	l *slog.Logger,
-	dctx *dnsContext,
-) (rc resultCode) {
-	l.DebugContext(ctx, "started processing dhcp hosts")
-	defer l.DebugContext(ctx, "finished processing dhcp hosts")
-
-	pctx := dctx.proxyCtx
-	req := pctx.Req
-
-	q := &req.Question[0]
-	dhcpHost := s.dhcpHostFromRequest(q)
-	if dctx.isDHCPHost = dhcpHost != ""; !dctx.isDHCPHost {
-		return resultCodeSuccess
-	}
-
-	if !pctx.IsPrivateClient {
-		l.DebugContext(
-			ctx,
-			"requests for dhcp host",
-			"addr", pctx.Addr,
-			"dhcp_host", dhcpHost,
-		)
-		pctx.Res = s.NewMsgNXDOMAIN(req)
-
-		// Do not even put into query log.
-		return resultCodeFinish
-	}
-
-	ip := s.dhcpServer.IPByHost(dhcpHost)
-	if ip == (netip.Addr{}) {
-		// Go on and process them with filters, including dnsrewrite ones, and
-		// possibly route them to a domain-specific upstream.
-		l.DebugContext(ctx, "no dhcp record", "dhcp_host", dhcpHost)
-
-		return resultCodeSuccess
-	}
-
-	l.DebugContext(ctx, "dhcp record for", "dhcp_host", dhcpHost, "ip", ip)
-
-	resp := s.replyCompressed(req)
-	switch q.Qtype {
-	case dns.TypeA:
-		a := &dns.A{
-			Hdr: s.hdr(req, dns.TypeA),
-			A:   ip.AsSlice(),
-		}
-		resp.Answer = append(resp.Answer, a)
-	case dns.TypeAAAA:
-		if s.dns64Pref != (netip.Prefix{}) {
-			// Respond with DNS64-mapped address for IPv4 host if DNS64 is
-			// enabled.
-			aaaa := &dns.AAAA{
-				Hdr:  s.hdr(req, dns.TypeAAAA),
-				AAAA: s.mapDNS64(ip),
-			}
-			resp.Answer = append(resp.Answer, aaaa)
-		}
-	default:
-		// Go on.
-	}
-
-	dctx.proxyCtx.Res = resp
-
-	return resultCodeSuccess
-}
-
-// processDHCPAddrs responds to PTR requests if the target IP is leased by the
-// DHCP server.  l and dctx must not be nil.
-func (s *Server) processDHCPAddrs(
-	ctx context.Context,
-	l *slog.Logger,
-	dctx *dnsContext,
-) (rc resultCode) {
-	l.DebugContext(ctx, "started processing dhcp addrs")
-	defer l.DebugContext(ctx, "finished processing dhcp addrs")
-
-	pctx := dctx.proxyCtx
-	if pctx.Res != nil {
-		return resultCodeSuccess
-	}
-
-	req := pctx.Req
-	q := req.Question[0]
-	pref := pctx.RequestedPrivateRDNS
-	// TODO(e.burkov):  Consider answering authoritatively for SOA and NS
-	// queries.
-	if pref == (netip.Prefix{}) || q.Qtype != dns.TypePTR {
-		return resultCodeSuccess
-	}
-
-	addr := pref.Addr()
-	host := s.dhcpServer.HostByIP(addr)
-	if host == "" {
-		return resultCodeSuccess
-	}
-
-	l.DebugContext(ctx, "dhcp client", "addr", addr, "host", host)
-
-	resp := s.replyCompressed(req)
-	ptr := &dns.PTR{
-		Hdr: dns.RR_Header{
-			Name:   q.Name,
-			Rrtype: dns.TypePTR,
-			// TODO(e.burkov):  Use [dhcpsvc.Lease.Expiry].  See
-			// https://github.com/AdguardTeam/AdGuardHome/issues/3932.
-			Ttl:   s.dnsFilter.BlockedResponseTTL(),
-			Class: dns.ClassINET,
-		},
-		Ptr: dns.Fqdn(strings.Join([]string{host, s.localDomainSuffix}, ".")),
-	}
-	resp.Answer = append(resp.Answer, ptr)
-	pctx.Res = resp
-
-	return resultCodeSuccess
-}
-
 // processFilteringBeforeRequest applies filtering logic.  l and dctx must not
 // be nil.
 func (s *Server) processFilteringBeforeRequest(
@@ -455,26 +327,10 @@ func (s *Server) processUpstream(
 	defer l.DebugContext(ctx, "finished processing upstream")
 
 	pctx := dctx.proxyCtx
-	req := pctx.Req
 
 	if pctx.Res != nil {
 		// The response has already been set.
 		return resultCodeSuccess
-	} else if dctx.isDHCPHost {
-		// A DHCP client hostname query that hasn't been handled or filtered.
-		// Respond with an NXDOMAIN.
-		//
-		// TODO(a.garipov): Route such queries to a custom upstream for the
-		// local domain name if there is one.
-		name := req.Question[0].Name
-		l.DebugContext(
-			ctx,
-			"dhcp client hostname was not filtered",
-			"hostname", name[:len(name)-1],
-		)
-		pctx.Res = s.NewMsgNXDOMAIN(req)
-
-		return resultCodeFinish
 	}
 
 	s.setCustomUpstream(ctx, l, pctx, dctx.clientID)
@@ -495,28 +351,6 @@ func (s *Server) processUpstream(
 	dctx.responseAD = pctx.Res.AuthenticatedData
 
 	return resultCodeSuccess
-}
-
-// dhcpHostFromRequest returns a hostname from question, if the request is for a
-// DHCP client's hostname when DHCP is enabled, and an empty string otherwise.
-func (s *Server) dhcpHostFromRequest(q *dns.Question) (reqHost string) {
-	if !s.dhcpServer.Enabled() {
-		return ""
-	}
-
-	// Include AAAA here, because despite the fact that we don't support it yet,
-	// the expected behavior here is to respond with an empty answer and not
-	// NXDOMAIN.
-	if qt := q.Qtype; qt != dns.TypeA && qt != dns.TypeAAAA {
-		return ""
-	}
-
-	reqHost = strings.ToLower(q.Name[:len(q.Name)-1])
-	if !netutil.IsSubdomain(reqHost, s.localDomainSuffix) {
-		return ""
-	}
-
-	return reqHost[:len(reqHost)-len(s.localDomainSuffix)-1]
 }
 
 // setCustomUpstream sets custom upstream settings in pctx, if necessary.  l and

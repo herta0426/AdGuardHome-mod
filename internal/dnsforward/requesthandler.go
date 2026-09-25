@@ -33,8 +33,6 @@ func (s *Server) ServeDNS(ctx context.Context, _ *proxy.Proxy, pctx *proxy.DNSCo
 	mods := []modProcessFunc{
 		s.processInitial,
 		s.processDDRQuery,
-		s.processDHCPHosts,
-		s.processDHCPAddrs,
 		s.processFilteringBeforeRequest,
 		s.processUpstream,
 		s.processFilteringAfterResponse,

@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"net/netip"
 	"net/url"
-	"runtime"
 	"strings"
 	"time"
 
@@ -112,10 +111,7 @@ type statusResponse struct {
 	StartTime aghhttp.JSONTime `json:"start_time"`
 
 	ProtectionEnabled bool `json:"protection_enabled"`
-	// TODO(e.burkov): Inspect if front-end doesn't requires this field as
-	// openapi.yaml declares.
-	IsDHCPAvailable bool `json:"dhcp_available"`
-	IsRunning       bool `json:"running"`
+	IsRunning         bool `json:"running"`
 }
 
 func (web *webAPI) handleStatus(w http.ResponseWriter, r *http.Request) {
@@ -169,11 +165,6 @@ func (web *webAPI) handleStatus(w http.ResponseWriter, r *http.Request) {
 			IsRunning:                  isRunning(),
 		}
 	}()
-
-	// IsDHCPAvailable field is now false by default for Windows.
-	if runtime.GOOS != "windows" {
-		resp.IsDHCPAvailable = globalContext.dhcpServer != nil
-	}
 
 	aghhttp.WriteJSONResponseOK(ctx, l, w, r, resp)
 }

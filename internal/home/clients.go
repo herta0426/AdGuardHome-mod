@@ -70,7 +70,6 @@ func (clients *clientsContainer) Init(
 	ctx context.Context,
 	baseLogger *slog.Logger,
 	objects []*clientObject,
-	dhcpServer client.DHCP,
 	etcHosts *aghnet.HostsContainer,
 	arpDB arpdb.Interface,
 	filteringConf *filtering.Config,
@@ -115,11 +114,9 @@ func (clients *clientsContainer) Init(
 		Logger:                 baseLogger.With(slogutil.KeyPrefix, "client_storage"),
 		Clock:                  timeutil.SystemClock{},
 		InitialClients:         confClients,
-		DHCP:                   dhcpServer,
 		EtcHosts:               hosts,
 		ARPDB:                  arpDB,
 		ARPClientsUpdatePeriod: arpClientsUpdatePeriod,
-		RuntimeSourceDHCP:      config.Clients.Sources.DHCP,
 	})
 	if err != nil {
 		return fmt.Errorf("init client storage: %w", err)

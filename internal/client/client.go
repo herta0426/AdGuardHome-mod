@@ -48,7 +48,6 @@ const (
 	SourceWHOIS Source = iota + 1
 	SourceARP
 	SourceRDNS
-	SourceDHCP
 	SourceHostsFile
 	SourcePersistent
 )
@@ -65,8 +64,6 @@ func (cs Source) String() (s string) {
 		return "ARP"
 	case SourceRDNS:
 		return "rDNS"
-	case SourceDHCP:
-		return "DHCP"
 	case SourceHostsFile:
 		return "etc/hosts"
 	default:
@@ -100,11 +97,6 @@ type Runtime struct {
 	// from the source is present, but empty.
 	rdns []string
 
-	// dhcp is the DHCP information of a client.  nil indicates that there is no
-	// information from the source.  Empty non-nil slice indicates that the data
-	// from the source is present, but empty.
-	dhcp []string
-
 	// hostsFile is the information from the hosts file.  nil indicates that
 	// there is no information from the source.  Empty non-nil slice indicates
 	// that the data from the source is present, but empty.
@@ -127,8 +119,6 @@ func (r *Runtime) Info() (cs Source, host string) {
 	switch {
 	case r.hostsFile != nil:
 		cs, info = SourceHostsFile, r.hostsFile
-	case r.dhcp != nil:
-		cs, info = SourceDHCP, r.dhcp
 	case r.rdns != nil:
 		cs, info = SourceRDNS, r.rdns
 	case r.arp != nil:
@@ -157,8 +147,6 @@ func (r *Runtime) setInfo(cs Source, hosts []string) {
 		r.arp = hosts
 	case SourceRDNS:
 		r.rdns = hosts
-	case SourceDHCP:
-		r.dhcp = hosts
 	case SourceHostsFile:
 		r.hostsFile = hosts
 	}
@@ -183,8 +171,6 @@ func (r *Runtime) unset(cs Source) {
 		r.arp = nil
 	case SourceRDNS:
 		r.rdns = nil
-	case SourceDHCP:
-		r.dhcp = nil
 	case SourceHostsFile:
 		r.hostsFile = nil
 	}
@@ -195,7 +181,6 @@ func (r *Runtime) isEmpty() (ok bool) {
 	return r.whois == nil &&
 		r.arp == nil &&
 		r.rdns == nil &&
-		r.dhcp == nil &&
 		r.hostsFile == nil
 }
 
@@ -215,7 +200,6 @@ func (r *Runtime) clone() (c *Runtime) {
 		whois:     r.whois.Clone(),
 		arp:       slices.Clone(r.arp),
 		rdns:      slices.Clone(r.rdns),
-		dhcp:      slices.Clone(r.dhcp),
 		hostsFile: slices.Clone(r.hostsFile),
 	}
 }
