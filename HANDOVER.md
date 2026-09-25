@@ -45,6 +45,7 @@ gh release delete v2026-09-24 --repo herta0426/AdguardHome-Mod --cleanup-tag --y
 
 - 「安全搜索」：前端代码、各引擎规则文件、后端实现、HTTP API 全部删除。
 - 「已阻止的服务」：服务清单（`internal/filtering/servicelist.go`，3400 多行）、图标接口、客户端与统计里的相关字段全部删除。
+- 「DHCP」：界面之外，后端也整个删掉了——`internal/dhcpd/**`（约 4200 行）与它依赖的 `internal/dhcpsvc/**`、`/control/dhcp/*` 九个接口、`dhcp` 配置段、`/control/status` 的 `dhcp_available`、客户端存储里按 DHCP 租约识别客户端（含按 MAC 反查）的逻辑，以及 DNS 侧用租约解析本地主机名与 PTR 的部分（`dnsforward` 里的 `processDHCPHosts`／`processDHCPAddrs`）。go.mod 里随之删掉 6 个直接依赖（`insomniacslk/dhcp`、两个 gopacket、`go-ping/ping`、`mdlayher/ethernet`、`mdlayher/packet`）。
 - 「加密设置」：删除的是前端页面、路由、状态管理与 HTTP 调用；后端的 TLS 接口（`/control/tls/status|configure|validate`、`serve_plain_dns`）**故意保留**。
 
 ### 2.3 平台与构建
@@ -56,7 +57,7 @@ gh release delete v2026-09-24 --repo herta0426/AdguardHome-Mod --cleanup-tag --y
 
 - 查询日志与统计里的 reason / result 编号保留为占位常量（`internal/filtering/reason.go`、`internal/stats/unit.go`），否则老日志、老统计文件升级后读不出来。
 - `internal/configmigrate/**` 里的迁移函数**全部保留**（v1…v34 一版都不能少，否则老配置升不上来），但 v4、v18、v19、v21、v22、v26 已经不再往配置里写 `use_global_blocked_services`、`safe_search`、`safesearch_cache_size`、`blocked_services`，而是把这些键从老配置里删掉。所以现在 `rg` 只会在迁移的注释和老的 `input.yml` 测试数据里看到这些字样。
-- DHCP 选项卡的界面删了，但后端 `/control/dhcp/*` 接口和 `internal/dhcpd` 还在（第三方管理器要用），这是故意的。
+- 注意：DHCP 曾经是「界面删了、后端保留」，后来改成一并删除（见 2.2）。所以 `/control/dhcp/*` 现在返回 404，`/control/status` 里也没有 `dhcp_available` 了；第三方管理器若因此报错，那是有意取舍。
 
 ### 2.5 一次真事：删接口会打断外部客户端
 
@@ -88,7 +89,7 @@ gh release delete v2026-09-24 --repo herta0426/AdguardHome-Mod --cleanup-tag --y
 | HTTP 接口常量（前端） | `client/src/api/Api.ts` |
 | 前端状态管理 | `client/src/actions/**`、`client/src/reducers/**`、`client/src/containers/**`、`client/src/initialState.ts` |
 | 语言文件 | `client/src/__locales/{en,zh-cn,zh-tw}.json`、根目录 `.twosky.json`、`client/src/i18n.ts` |
-| 后端全局路由 | `internal/home/control.go`；各子系统自己注册（`internal/dnsforward/http.go`、`internal/filtering/http.go`、`internal/home/clientshttp.go`、`internal/dhcpd/http_unix.go`、`internal/stats/http.go`、`internal/querylog/http.go`） |
+| 后端全局路由 | `internal/home/control.go`；各子系统自己注册（`internal/dnsforward/http.go`、`internal/filtering/http.go`、`internal/home/clientshttp.go`、`internal/stats/http.go`、`internal/querylog/http.go`） |
 | 鉴权与权限分级 | `internal/home/middlewares.go` |
 | 配置结构 | `internal/home/config.go`；历史迁移在 `internal/configmigrate/**` |
 | 配置参考模板 | `doc/AdGuardHome.yaml.example`（只是参考，安装不需要；由程序自己生成） |

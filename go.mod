@@ -12,23 +12,14 @@ require (
 	github.com/c2h5oh/datasize v0.0.0-20231215233829-aa82cc1e6500
 	github.com/digineo/go-ipset/v2 v2.2.1
 	github.com/fsnotify/fsnotify v1.10.1
-	// TODO(e.burkov): This package is deprecated; find a new one or use our
-	// own code for that.  Perhaps, use gopacket.
-	github.com/go-ping/ping v1.2.0
 	github.com/google/go-cmp v0.7.0
-	// TODO(e.burkov): Remove this dependency along with the dhcpd package.
-	github.com/google/gopacket v1.1.19
 	github.com/google/renameio/v2 v2.0.2
 	github.com/google/uuid v1.6.0
-	github.com/gopacket/gopacket v1.7.1
-	github.com/insomniacslk/dhcp v0.0.0-20260728151720-c308df0fdcef
 	// TODO(e.burkov):  Get rid of this dependency.  At least, don't update
 	// it, unless all custom templates will be migrated to the new format,
 	// see https://github.com/kardianos/service/issues/418.
 	github.com/kardianos/service v1.2.4
-	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118
 	github.com/mdlayher/netlink v1.11.2
-	github.com/mdlayher/packet v1.1.2
 	github.com/miekg/dns v1.1.72
 	github.com/quic-go/quic-go v0.61.0
 	github.com/stretchr/testify v1.12.0
@@ -69,7 +60,6 @@ require (
 	github.com/gordonklaus/ineffassign v0.2.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/invopop/jsonschema v0.14.0 // indirect
-	github.com/josharian/native v1.1.0 // indirect
 	github.com/jstemmer/go-junit-report/v2 v2.1.0 // indirect
 	github.com/kisielk/errcheck v1.20.0 // indirect
 	github.com/mdlayher/socket v0.6.1 // indirect
@@ -77,7 +67,6 @@ require (
 	github.com/openai/openai-go/v3 v3.52.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pb33f/ordered-map/v2 v2.3.1 // indirect
-	github.com/pierrec/lz4/v4 v4.1.29 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
@@ -89,7 +78,6 @@ require (
 	github.com/tidwall/match v1.2.0 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tidwall/sjson v1.2.5 // indirect
-	github.com/u-root/uio v0.0.0-20240224005618-d2acac8f3701 // indirect
 	github.com/uudashr/gocognit v1.2.1 // indirect
 	github.com/xo/terminfo v1.0.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect

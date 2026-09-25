@@ -18,8 +18,6 @@
 'tags':
 - 'name': 'clients'
   'description': 'Clients list operations'
-- 'name': 'dhcp'
-  'description': 'Built-in DHCP server controls'
 - 'name': 'filtering'
   'description': 'Rule-based filtering'
 - 'name': 'global'
@@ -478,172 +476,6 @@
                 '$ref': '#/components/schemas/TlsConfig'
         '400':
           'description': 'Invalid configuration or unavailable port'
-  '/dhcp/status':
-    'get':
-      'tags':
-      - 'dhcp'
-      'operationId': 'dhcpStatus'
-      'summary': 'Gets the current DHCP settings and status'
-      'responses':
-        '200':
-          'description': 'OK.'
-          'content':
-            'application/json':
-              'schema':
-                '$ref': '#/components/schemas/DhcpStatus'
-        '500':
-          'content':
-            'application/json':
-              'schema':
-                '$ref': '#/components/schemas/Error'
-          'description': 'Not implemented (for example, on Windows).'
-  '/dhcp/interfaces':
-    'get':
-      'tags':
-      - 'dhcp'
-      'operationId': 'dhcpInterfaces'
-      'summary': 'Gets the available interfaces'
-      'responses':
-        '200':
-          'description': 'OK.'
-          'content':
-            'application/json':
-              'schema':
-                '$ref': '#/components/schemas/DHCPNetInterfaces'
-        '500':
-          'content':
-            'application/json':
-              'schema':
-                '$ref': '#/components/schemas/Error'
-          'description': 'Not implemented (for example, on Windows).'
-  '/dhcp/set_config':
-    'post':
-      'tags':
-      - 'dhcp'
-      'operationId': 'dhcpSetConfig'
-      'summary': 'Updates the current DHCP server configuration'
-      'requestBody':
-        'content':
-          'application/json':
-            'schema':
-              '$ref': '#/components/schemas/DhcpConfig'
-      'responses':
-        '200':
-          'description': 'OK.'
-        '501':
-          'content':
-            'application/json':
-              'schema':
-                '$ref': '#/components/schemas/Error'
-          'description': 'Not implemented (for example, on Windows).'
-  '/dhcp/find_active_dhcp':
-    'post':
-      'tags':
-      - 'dhcp'
-      'operationId': 'checkActiveDhcp'
-      'summary': 'Searches for an active DHCP server on the network'
-      'requestBody':
-        'content':
-          'application/json':
-            'schema':
-              '$ref': '#/components/schemas/DhcpFindActiveReq'
-      'responses':
-        '200':
-          'description': 'OK.'
-          'content':
-            'application/json':
-              'schema':
-                '$ref': '#/components/schemas/DhcpSearchResult'
-        '501':
-          'content':
-            'application/json':
-              'schema':
-                '$ref': '#/components/schemas/Error'
-          'description': 'Not implemented (for example, on Windows).'
-  '/dhcp/add_static_lease':
-    'post':
-      'tags':
-      - 'dhcp'
-      'operationId': 'dhcpAddStaticLease'
-      'summary': 'Adds a static lease'
-      'requestBody':
-        '$ref': '#/components/requestBodies/DhcpStaticLease'
-      'responses':
-        '200':
-          'description': 'OK.'
-        '501':
-          'content':
-            'application/json':
-              'schema':
-                '$ref': '#/components/schemas/Error'
-          'description': 'Not implemented (for example, on Windows).'
-  '/dhcp/remove_static_lease':
-    'post':
-      'tags':
-      - 'dhcp'
-      'operationId': 'dhcpRemoveStaticLease'
-      'summary': 'Removes a static lease'
-      'requestBody':
-        '$ref': '#/components/requestBodies/DhcpStaticLease'
-      'responses':
-        '200':
-          'description': 'OK.'
-        '501':
-          'content':
-            'application/json':
-              'schema':
-                '$ref': '#/components/schemas/Error'
-          'description': 'Not implemented (for example, on Windows).'
-  '/dhcp/update_static_lease':
-    'post':
-      'tags':
-      - 'dhcp'
-      'operationId': 'dhcpUpdateStaticLease'
-      'description': >
-        Updates IP address, hostname of the static lease.  IP version must be
-        the same as previous.
-      'summary': 'Updates a static lease'
-      'requestBody':
-        '$ref': '#/components/requestBodies/DhcpStaticLease'
-      'responses':
-        '200':
-          'description': 'OK.'
-        '501':
-          'content':
-            'application/json':
-              'schema':
-                '$ref': '#/components/schemas/Error'
-          'description': 'Not implemented (for example, on Windows).'
-  '/dhcp/reset':
-    'post':
-      'tags':
-      - 'dhcp'
-      'operationId': 'dhcpReset'
-      'summary': 'Reset DHCP configuration'
-      'responses':
-        '200':
-          'description': 'OK.'
-        '501':
-          'content':
-            'application/json':
-              'schema':
-                '$ref': '#/components/schemas/Error'
-          'description': 'Not implemented (for example, on Windows).'
-  '/dhcp/reset_leases':
-    'post':
-      'tags':
-      - 'dhcp'
-      'operationId': 'dhcpResetLeases'
-      'summary': 'Reset DHCP leases'
-      'responses':
-        '200':
-          'description': 'OK.'
-        '501':
-          'content':
-            'application/json':
-              'schema':
-                '$ref': '#/components/schemas/Error'
-          'description': 'Not implemented (for example, on Windows).'
   '/filtering/status':
     'get':
       'tags':
@@ -1317,12 +1149,6 @@
             '$ref': '#/components/schemas/TlsConfig'
       'description': 'TLS configuration JSON'
       'required': true
-    'DhcpStaticLease':
-      'content':
-        'application/json':
-          'schema':
-            '$ref': '#/components/schemas/DhcpStaticLease'
-      'required': true
     'RewriteEntry':
       'content':
         'application/json':
@@ -1391,8 +1217,6 @@
         'protection_disabled_duration':
           'type': 'integer'
           'format': 'int64'
-        'dhcp_available':
-          'type': 'boolean'
         'running':
           'type': 'boolean'
         'version':
@@ -1891,193 +1715,12 @@
             statistics.
     'PutStatsConfigUpdateRequest':
       '$ref': '#/components/schemas/GetStatsConfigResponse'
-    'DhcpConfig':
-      'type': 'object'
-      'properties':
-        'enabled':
-          'type': 'boolean'
-        'interface_name':
-          'type': 'string'
-        'v4':
-          '$ref': '#/components/schemas/DhcpConfigV4'
-        'v6':
-          '$ref': '#/components/schemas/DhcpConfigV6'
-    'DhcpConfigV4':
-      'type': 'object'
-      'required':
-      - 'gateway_ip'
-      - 'subnet_mask'
-      - 'range_start'
-      - 'range_end'
-      - 'lease_duration'
-      'properties':
-        'gateway_ip':
-          'type': 'string'
-          'example': '192.168.1.1'
-        'subnet_mask':
-          'type': 'string'
-          'example': '255.255.255.0'
-        'range_start':
-          'type': 'string'
-          'example': '192.168.1.2'
-        'range_end':
-          'type': 'string'
-          'example': '192.168.10.50'
-        'lease_duration':
-          'type': 'integer'
-    'DhcpConfigV6':
-      'type': 'object'
-      'properties':
-        'range_start':
-          'type': 'string'
-        'lease_duration':
-          'type': 'integer'
-    'DhcpLease':
-      'type': 'object'
-      'description': 'DHCP lease information'
-      'required':
-      - 'mac'
-      - 'ip'
-      - 'hostname'
-      - 'expires'
-      'properties':
-        'mac':
-          'type': 'string'
-          'example': '00:11:09:b3:b3:b8'
-        'ip':
-          'type': 'string'
-          'example': '192.168.1.22'
-        'hostname':
-          'type': 'string'
-          'example': 'dell'
-        'expires':
-          'type': 'string'
-          'example': '2017-07-21T17:32:28Z'
-    'DhcpStaticLease':
-      'type': 'object'
-      'description': 'DHCP static lease information'
-      'required':
-      - 'mac'
-      - 'ip'
-      - 'hostname'
-      'properties':
-        'mac':
-          'type': 'string'
-          'example': '00:11:09:b3:b3:b8'
-        'ip':
-          'type': 'string'
-          'example': '192.168.1.22'
-        'hostname':
-          'type': 'string'
-          'example': 'dell'
-    'DhcpStatus':
-      'type': 'object'
-      'description': 'Built-in DHCP server configuration and status'
-      'required':
-      - 'enabled'
-      - 'interface_name'
-      - 'v4'
-      - 'v6'
-      - 'leases'
-      - 'static_leases'
-      'properties':
-        'enabled':
-          'type': 'boolean'
-        'interface_name':
-          'type': 'string'
-        'v4':
-          '$ref': '#/components/schemas/DhcpConfigV4'
-        'v6':
-          '$ref': '#/components/schemas/DhcpConfigV6'
-        'leases':
-          'type': 'array'
-          'items':
-            '$ref': '#/components/schemas/DhcpLease'
-        'static_leases':
-          'type': 'array'
-          'items':
-            '$ref': '#/components/schemas/DhcpStaticLease'
     'NetInterfaces':
       'type': 'object'
       'description': >
         Network interfaces dictionary, keys are interface names.
       'additionalProperties':
         '$ref': '#/components/schemas/NetInterface'
-
-    'DHCPNetInterfaces':
-      'type': 'object'
-      'description': >
-        DHCP network interfaces dictionary, keys are interface names.
-      'additionalProperties':
-        '$ref': '#/components/schemas/DHCPNetInterface'
-
-    'DhcpFindActiveReq':
-      'description': >
-        Request for checking for other DHCP servers in the network.
-      'properties':
-        'interface':
-          'description': 'The name of the network interface'
-          'example': 'eth0'
-          'type': 'string'
-      'type': 'object'
-
-    'DhcpSearchResult':
-      'type': 'object'
-      'description': >
-        Information about a DHCP server discovered in the current network.
-      'properties':
-        'v4':
-          '$ref': '#/components/schemas/DhcpSearchV4'
-        'v6':
-          '$ref': '#/components/schemas/DhcpSearchV6'
-
-    'DhcpSearchV4':
-      'type': 'object'
-      'properties':
-        'other_server':
-          '$ref': '#/components/schemas/DhcpSearchResultOtherServer'
-        'static_ip':
-          '$ref': '#/components/schemas/DhcpSearchResultStaticIP'
-
-    'DhcpSearchV6':
-      'type': 'object'
-      'properties':
-        'other_server':
-          '$ref': '#/components/schemas/DhcpSearchResultOtherServer'
-
-    'DhcpSearchResultOtherServer':
-      'type': 'object'
-      'properties':
-        'found':
-          'type': 'string'
-          'enum':
-          - 'yes'
-          - 'no'
-          - 'error'
-          'description': >
-            The result of searching the other DHCP server.
-          'example': 'no'
-        'error':
-          'type': 'string'
-          'description': 'Set if found=error'
-          'example': ''
-
-    'DhcpSearchResultStaticIP':
-      'type': 'object'
-      'properties':
-        'static':
-          'type': 'string'
-          'enum':
-          - 'yes'
-          - 'no'
-          - 'error'
-          'description': >
-            The result of determining static IP address.
-          'example': 'yes'
-        'ip':
-          'type': 'string'
-          'description': 'Set if static=no'
-          'example': ''
 
     'DnsAnswer':
       'type': 'object'
@@ -2499,46 +2142,6 @@
           'type': 'string'
           'example': 'eth0'
 
-    'DHCPNetInterface':
-      'type': 'object'
-      'description': 'DHCP network interface info'
-      'required':
-      - 'flags'
-      - 'gateway_ip'
-      - 'hardware_address'
-      - 'ipv4_addresses'
-      - 'ipv6_addresses'
-      - 'name'
-      'properties':
-        'flags':
-          'type': 'string'
-          'description': >
-            Flags could be any combination of the following values, divided by
-            the "|" character: "up", "broadcast", "loopback", "pointtopoint" and
-            "multicast".
-          'example': 'up|broadcast|multicast'
-        'gateway_ip':
-          'type': 'string'
-          'description': 'The IP address of the gateway.'
-          'example': '192.0.2.0'
-        'hardware_address':
-          'type': 'string'
-          'example': '52:54:00:11:09:ba'
-        'ipv4_addresses':
-          'type': 'array'
-          'description': >
-            The addresses of the interface of v4 family.
-          'items':
-            'type': 'string'
-        'ipv6_addresses':
-          'type': 'array'
-          'description': >
-            The addresses of the interface of v6 family.
-          'items':
-            'type': 'string'
-        'name':
-          'type': 'string'
-          'example': 'eth0'
     'AddressInfo':
       'type': 'object'
       'description': 'Port information'

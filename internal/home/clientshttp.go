@@ -94,8 +94,6 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, r *http
 		return true
 	})
 
-	clients.storage.UpdateDHCP(ctx)
-
 	clients.storage.RangeRuntime(func(rc *client.Runtime) (cont bool) {
 		src, host := rc.Info()
 		cj := runtimeClientJSON{

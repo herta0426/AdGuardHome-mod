@@ -57,11 +57,6 @@ func TestServer_ServeDNS(t *testing.T) {
 	f.SetEnabled(true)
 
 	s, err := NewServer(DNSCreateParams{
-		DHCPServer: &testDHCP{
-			OnEnabled:  func() (ok bool) { return false },
-			OnHostByIP: func(ip netip.Addr) (_ string) { panic(testutil.UnexpectedCall(ip)) },
-			OnIPByHost: func(host string) (_ netip.Addr) { panic(testutil.UnexpectedCall(host)) },
-		},
 		DNSFilter:   f,
 		PrivateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
 		Logger:      testLogger,

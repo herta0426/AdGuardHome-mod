@@ -17,7 +17,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/configmgr"
 	"github.com/AdguardTeam/AdGuardHome/internal/configmigrate"
-	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
@@ -68,7 +67,6 @@ type clientSourcesConfig struct {
 	WHOIS     bool `yaml:"whois"`
 	ARP       bool `yaml:"arp"`
 	RDNS      bool `yaml:"rdns"`
-	DHCP      bool `yaml:"dhcp"`
 	HostsFile bool `yaml:"hosts"`
 }
 
@@ -118,8 +116,7 @@ type configuration struct {
 	WhitelistFilters []filtering.FilterYAML `yaml:"whitelist_filters"`
 	UserRules        []string               `yaml:"user_rules"`
 
-	DHCP      *dhcpd.ServerConfig `yaml:"dhcp"`
-	Filtering *filtering.Config   `yaml:"filtering"`
+	Filtering *filtering.Config `yaml:"filtering"`
 
 	// Clients contains the YAML representations of the persistent clients.
 	// This field is only used for reading and writing persistent client data.
@@ -509,22 +506,11 @@ var config = &configuration{
 		ParentalBlockHost:     defaultParentalBlockHost,
 		SafeBrowsingBlockHost: defaultSafeBrowsingBlockHost,
 	},
-	DHCP: &dhcpd.ServerConfig{
-		LocalDomainName: "lan",
-		Conf4: dhcpd.V4ServerConf{
-			LeaseDuration: dhcpd.DefaultDHCPLeaseTTL,
-			ICMPTimeout:   dhcpd.DefaultDHCPTimeoutICMP,
-		},
-		Conf6: dhcpd.V6ServerConf{
-			LeaseDuration: dhcpd.DefaultDHCPLeaseTTL,
-		},
-	},
 	Clients: &clientsConfig{
 		Sources: &clientSourcesConfig{
 			WHOIS:     true,
 			ARP:       true,
 			RDNS:      true,
-			DHCP:      true,
 			HostsFile: true,
 		},
 	},
@@ -839,10 +825,6 @@ func (c *configuration) write(
 		config.Clients.Sources.WHOIS = addrProcConf.UseWHOIS
 		dns.UsePrivateRDNS = addrProcConf.UsePrivateRDNS
 		dns.UpstreamTimeout = timeutil.Duration(s.UpstreamTimeout())
-	}
-
-	if globalContext.dhcpServer != nil {
-		globalContext.dhcpServer.WriteDiskConfig(config.DHCP)
 	}
 
 	config.Clients.Persistent = globalContext.clients.forConfig()

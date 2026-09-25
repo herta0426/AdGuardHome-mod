@@ -15,6 +15,15 @@
 - 配置迁移不再写入已删除功能的键：`internal/configmigrate` 的 v4、v18、v19、v21、v22、v26 不再生成或搬运 `use_global_blocked_services`、`safe_search`、`safesearch_cache_size`、`blocked_services`，而是把它们从老配置里删掉。迁移链路本身不变，老配置照旧能升到 schema 34。
 - 同步更新迁移的测试数据与单测期望值，并修正 `internal/filtering/reason.go`、`internal/home/clients.go`、`internal/querylog/` 的 `gofmt` 对齐。
 
+### 移除
+
+- 「DHCP」功能整体删除，不再只是删界面：
+  - 后端：`internal/dhcpd/**`（DHCPv4/v6 服务器、租约库、静态租约、RA，约 4200 行）、它依赖的 `internal/dhcpsvc/**`，以及 `internal/aghnet` 里只服务于 DHCP 的探测代码。
+  - 接口：`/control/dhcp/status|interfaces|set_config|find_active_dhcp|add_static_lease|remove_static_lease|update_static_lease|reset|reset_leases` 九个接口，以及 `openapi/openapi.yaml`、`AGHTechDoc.md` 里对应的描述。
+  - 配置：`dhcp` 配置段、`/control/status` 的 `dhcp_available`、`clients.runtime_sources.dhcp`。老配置里残留的这些键会被忽略，不影响启动。
+  - 客户端与 DNS：不再按 DHCP 租约识别客户端（包括按 MAC 反查 IP），也不再从租约解析本地主机名与 PTR。
+  - 依赖：`go.mod` 里删掉 `insomniacslk/dhcp`、`google/gopacket`、`gopacket/gopacket`、`go-ping/ping`、`mdlayher/ethernet`、`mdlayher/packet` 六个直接依赖。
+
 ## v2026-09-24
 
 ### 移除
