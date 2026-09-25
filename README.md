@@ -61,7 +61,7 @@ DNS 服务、过滤规则、查询日志、客户端管理、加密和 REST API 
 
 - 只支持并构建 `linux/amd64`（x86_64）与 `linux/arm64`。
 - 删除其它操作系统的代码与构建配置、Snapcraft 与 Docker 构建、新版前端，以及未完成的 next API。
-- 关闭在线更新检查，因为 AdGuard 的更新服务器只提供官方构建；自行配置自定义更新地址仍然可用。
+- 在线更新改用自己的更新源：官方更新服务器只提供官方构建，所以 mod 改为读取仓库根目录的 [`version.json`](version.json)，由发版工作流在每次发版时自动改成最新版本与下载地址。只有 arm64 构建会检查更新，因为发版只提供 arm64。
 
 有意保留的部分，不是漏删：
 
@@ -70,17 +70,18 @@ DNS 服务、过滤规则、查询日志、客户端管理、加密和 REST API 
 
 本项目不只是做减法：后续会继续加入自己的功能与调整，改动都记录在 [CHANGELOG.md](CHANGELOG.md) 里。
 
-版本号使用日期，例如 `v2026-09-24`，见 `scripts/make/version.sh`。
+版本号使用日期，例如 `v2026-09-24`，见 `scripts/make/version.sh`。预发布在日期后面加后缀，例如 `v2026-09-25-beta`、`v2026-09-25-rc.1`；带后缀的 tag 会以「预发布」形式发布，不会抢占「最新版本」。
 
 ## 下载与安装
 
-每次发版都会附上这些文件：
+发版只提供 arm64 的包（手机与 Magisk 模块用的就是这个）：
 
-- `AdGuardHome_linux_amd64.tar.gz` — x86_64
 - `AdGuardHome_linux_arm64.tar.gz` — arm64
 - `checksums.txt` — 压缩包的 SHA-256 校验和
 
-去 [Releases](https://github.com/liuzq2002/AdguardHome-Mod/releases) 下载，或者在 Actions 页面手动运行工作流并下载 `AdGuardHome-linux` 产物。
+去 [Releases](https://github.com/liuzq2002/AdguardHome-Mod/releases) 下载。amd64 只用于本地测试，不随发版提供；需要时在 Actions 页面手动运行工作流，下载 `AdGuardHome-linux` 产物，里面同时有 amd64 与 arm64 两个包。
+
+面板里的「更新」也是从本仓库取信息的：程序读仓库根目录的 [`version.json`](version.json)（原始地址 `https://raw.githubusercontent.com/liuzq2002/AdguardHome-Mod/main/version.json`），发版工作流每次发版会自动把它改成新版本号、发布页地址与 arm64 压缩包地址。所以装好之后，面板会提示并可以直接升级到下一个版本。如果这个地址在你的网络下连不上，可以换成镜像（例如 `https://ghfast.top/https://raw.githubusercontent.com/...` 或 jsDelivr），见 [交接文档](HANDOVER.md) 的「换更新源」一节。
 
 ```sh
 tar -xzf AdGuardHome_linux_arm64.tar.gz
@@ -137,7 +138,7 @@ git merge upstream/master
 | `client/src/components/Settings/` | 修改后的常规设置与 DNS 设置 |
 | `client/src/components/ui/Footer.tsx` | 修改后的页脚 |
 | `.github/`、`Makefile`、`scripts/make/` | 只保留 Linux 的构建与 CI |
-| `internal/home/home.go` | 关闭的更新检查 |
+| `internal/home/home.go`、`internal/updater/` | 指向本仓库 `version.json` 的更新源 |
 
 合并完成后运行 `make quick-build` 再推送；CI 会跑 lint、测试并构建两个架构。
 

@@ -14,7 +14,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -70,12 +69,21 @@ type Updater struct {
 	prevCheckResult VersionInfo
 }
 
+// The mod keeps its own version announcement file in the repository instead of
+// using https://static.adtidy.org/adguardhome/<channel>/version.json, which
+// only serves the official builds.  The release workflow rewrites version.json
+// on every release.
+const (
+	defaultVersionURLHost = "raw.githubusercontent.com"
+	defaultVersionURLPath = "/liuzq2002/AdguardHome-Mod/main/version.json"
+)
+
 // DefaultVersionURL returns the default URL for the version announcement.
 func DefaultVersionURL() *url.URL {
 	return &url.URL{
 		Scheme: urlutil.SchemeHTTPS,
-		Host:   "static.adtidy.org",
-		Path:   path.Join("adguardhome", version.Channel(), "version.json"),
+		Host:   defaultVersionURLHost,
+		Path:   defaultVersionURLPath,
 	}
 }
 

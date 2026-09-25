@@ -6,7 +6,11 @@
 # date of the latest commit, so the same commit always produces the same
 # version, and tags are expected to look like v2026-09-23 as well.
 #
-# The valid output format is "vYYYY-MM-DD".
+# A release candidate or a beta adds a suffix, for example v2026-09-23-rc.1 or
+# v2026-09-23-beta.  The CI workflow uses the suffix to publish those tags as
+# pre-releases.
+#
+# The valid output format is "vYYYY-MM-DD" with an optional "-suffix".
 
 verbose="${VERBOSE:-0}"
 readonly verbose
@@ -17,14 +21,14 @@ fi
 
 set -e -f -u
 
-date_version_pattern='^v[0-9]{4}-[0-9]{2}-[0-9]{2}$'
-readonly date_version_pattern
+version_pattern='^v[0-9]{4}-[0-9]{2}-[0-9]{2}(-[0-9A-Za-z][0-9A-Za-z.]*)?$'
+readonly version_pattern
 
 # Prefer a date tag, if the current commit has one.
 tag="$(git describe --exact-match --tags 2>/dev/null || true)"
 readonly tag
 
-if echo "$tag" | grep -E -e "$date_version_pattern" -q; then
+if echo "$tag" | grep -E -e "$version_pattern" -q; then
 	version="$tag"
 else
 	# Use the date of the latest commit rather than the date of the build, so
@@ -43,7 +47,7 @@ fi
 readonly version
 
 # Finally, make sure that we don't output an invalid version.
-if ! echo "$version" | grep -E -e "$date_version_pattern" -q; then
+if ! echo "$version" | grep -E -e "$version_pattern" -q; then
 	echo "generated an invalid version '$version'" 1>&2
 
 	exit 1

@@ -14,6 +14,9 @@
 
 - 配置迁移不再写入已删除功能的键：`internal/configmigrate` 的 v4、v18、v19、v21、v22、v26 不再生成或搬运 `use_global_blocked_services`、`safe_search`、`safesearch_cache_size`、`blocked_services`，而是把它们从老配置里删掉。迁移链路本身不变，老配置照旧能升到 schema 34。
 - 同步更新迁移的测试数据与单测期望值，并修正 `internal/filtering/reason.go`、`internal/home/clients.go`、`internal/querylog/` 的 `gofmt` 对齐。
+- 在线更新改用自己的更新源：新增仓库根目录的 `version.json`，`updater.DefaultVersionURL()` 指向它，发版工作流每次发版自动把它改成新版本号、发布页地址与 arm64 压缩包地址。arm64 构建默认检查更新（`--no-check-update` 可关，本地测试用的 amd64 不检查，因为不发这个包）；`--update` 也随之指向自己的版本，不会再把自己换成官方版。
+- 版本号支持预发布后缀：`v2026-09-25-beta`、`v2026-09-25-rc.1` 这类 tag 会被原样用作版本号，并按 GitHub 预发布发布，不抢占「最新版本」。
+- 发版只提供 arm64：Release 里放 `AdGuardHome_linux_arm64.tar.gz` 与配套的 `checksums.txt`；amd64 只上传到 Actions 产物 `AdGuardHome-linux`，供本地测试。
 
 ### 移除
 
