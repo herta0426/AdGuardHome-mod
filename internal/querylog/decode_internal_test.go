@@ -66,8 +66,8 @@ func TestQueryLog_DecodeLogEntry_success(t *testing.T) {
 				dns.TypeA: []rules.RRValue{net.IPv4(127, 0, 0, 2)},
 			},
 		},
-		CanonName:   "example.com",
-		IPList:      []netip.Addr{netip.AddrFrom4([4]byte{127, 0, 0, 2})},
+		CanonName: "example.com",
+		IPList:    []netip.Addr{netip.AddrFrom4([4]byte{127, 0, 0, 2})},
 		Rules: []*filtering.ResultRule{{
 			FilterListID: 42,
 			Text:         "||an.yandex.ru",

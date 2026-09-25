@@ -55,14 +55,6 @@ clients:
     filtering_enabled: false
     parental_enabled: false
     safebrowsing_enabled: false
-    safe_search:
-      enabled:    true
-      bing:       true
-      duckduckgo: true
-      google:     true
-      pixabay:    true
-      yandex:     true
-      youtube:    true
   runtime_sources:
     whois: true
     arp:   true

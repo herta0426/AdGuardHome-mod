@@ -31,11 +31,6 @@ dns:
     enabled:    true
     use_custom: false
     custom_ip:  ""
-  blocked_services:
-    schedule:
-      time_zone: Local
-    ids:
-    - 500px
 filters:
 - url: https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt
   name: ""

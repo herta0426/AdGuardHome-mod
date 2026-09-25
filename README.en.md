@@ -66,7 +66,7 @@ Linux only:
 Kept on purpose, not forgotten:
 
 - The reason and result numbers in the query log and the statistics files are kept as reserved placeholders, so that the existing logs and statistics files stay readable after the upgrade.
-- The historical migrations in `internal/configmigrate` still mention `safe_search` and `blocked_services`.  They are needed to upgrade an old `AdGuardHome.yaml`, and removing them would break such upgrades.
+- All the historical migrations in `internal/configmigrate` are kept, so that an old `AdGuardHome.yaml` can be upgraded version by version.  They no longer write the keys of the removed features, such as `safe_search` and `blocked_services`, and instead drop those keys from old configurations.
 
 This project does more than remove things: more features and adjustments of our own are on the way, and all of them are listed in [CHANGELOG.md](CHANGELOG.md).
 
@@ -89,6 +89,8 @@ sha256sum -c --ignore-missing checksums.txt
 ```
 
 Replace the executable and restart.  The version shown in the update section of the dashboard should be a date such as `v2026-09-24`; if it shows `v0.107.x` or similar, the official build is still installed.  Hard-refresh the browser once after replacing the binary, so that it does not serve the cached frontend.
+
+`doc/AdGuardHome.yaml.example` is a reference template that shows what the configuration looks like after the mod's removals: the keys that the official build writes, such as `dns.safe_search`, `dns.safesearch_cache_size`, `dns.blocked_services`, `clients[].safe_search`, and `clients[].blocked_services`, are not there.  It is **not required** for installation, since the program writes the same configuration on its first launch.  Use it when editing a configuration by hand or when cleaning up an old one, and always back the file up first.
 
 ## Build from source
 
@@ -141,6 +143,7 @@ After merging, run `make quick-build`, then push.  The workflow lints, tests, an
 
 ## Documentation
 
+- [Handover and maintenance notes](HANDOVER.md) (written in Chinese): local environment, builds and releases, syncing with the upstream, adding and removing features.
 - [Upstream wiki](https://github.com/AdguardTeam/AdGuardHome/wiki)
 - [Upstream API description](https://github.com/AdguardTeam/AdGuardHome/tree/master/openapi)
 

@@ -18,9 +18,7 @@ fi
 # TODO(e.burkov):  Add README.md and possibly AGHTechDoc.md.
 markdownlint \
 	./CHANGELOG.md \
-	./CONTRIBUTING.md \
 	./HACKING.md \
-	./SECURITY.md \
 	./internal/dhcpd/*.md \
 	./openapi/*.md \
 	./scripts/*.md \

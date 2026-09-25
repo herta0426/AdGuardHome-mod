@@ -16,14 +16,11 @@ import "context"
 //	# AFTER:
 //	'schema_version': 21
 //	'dns':
-//	  'blocked_services':
-//	    'ids':
-//	    - 'svc_name'
-//	    - # …
-//	    'schedule':
-//	      'time_zone': 'Local'
 //	  # …
 //	# …
+//
+// Upstream turned 'dns.blocked_services' into an object with a schedule here,
+// but the mod doesn't support blocked services, so the field is dropped.
 func (m *Migrator) migrateTo21(_ context.Context, diskConf yobj) (err error) {
 	diskConf["schema_version"] = 21
 
@@ -34,18 +31,7 @@ func (m *Migrator) migrateTo21(_ context.Context, diskConf yobj) (err error) {
 		return err
 	}
 
-	svcs := yobj{
-		"schedule": yobj{
-			"time_zone": "Local",
-		},
-	}
-
-	err = moveVal[yarr](dns, svcs, field, "ids")
-	if err != nil {
-		return err
-	}
-
-	dns[field] = svcs
+	delete(dns, field)
 
 	return nil
 }
