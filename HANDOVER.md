@@ -2,6 +2,8 @@
 
 这份文档写给接手这个仓库的人，也写给以后在这个仓库里干活的 AI。看完之后，应该能独立完成四件事：改功能、发版、同步上游、排查线上问题。
 
+日常操作（改一次东西的流程、发版步骤、在线更新维护、排错）见 [MAINTENANCE.md](MAINTENANCE.md)，本文更侧重现状与来龙去脉。
+
 - 上游项目：<https://github.com/AdguardTeam/AdGuardHome>
 - 主仓库：<https://github.com/liuzq2002/AdguardHome-Mod>（Release 发在这里）
 - 主要适配对象：[Adguard-Home-For-Magisk-Mod](https://github.com/liuzq2002/Adguard-Home-For-Magisk-Mod)（把 AdGuard Home 塞进 Android / Magisk 模块）
