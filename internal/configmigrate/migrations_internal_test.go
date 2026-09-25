@@ -1015,18 +1015,10 @@ func TestUpgradeSchema17to18(t *testing.T) {
 
 	const newSchemaVer = 18
 
+	// The mod doesn't support safe search, so only the old
+	// 'dns.safesearch_enabled' field is dropped here.
 	defaultWantObj := yobj{
-		"dns": yobj{
-			"safe_search": yobj{
-				"enabled":    true,
-				"bing":       true,
-				"duckduckgo": true,
-				"google":     true,
-				"pixabay":    true,
-				"yandex":     true,
-				"youtube":    true,
-			},
-		},
+		"dns":            yobj{},
 		"schema_version": newSchemaVer,
 	}
 
@@ -1043,21 +1035,8 @@ func TestUpgradeSchema17to18(t *testing.T) {
 		want: defaultWantObj,
 		name: "enabled",
 	}, {
-		in: yobj{"dns": yobj{"safesearch_enabled": false}},
-		want: yobj{
-			"dns": yobj{
-				"safe_search": map[string]any{
-					"enabled":    false,
-					"bing":       true,
-					"duckduckgo": true,
-					"google":     true,
-					"pixabay":    true,
-					"yandex":     true,
-					"youtube":    true,
-				},
-			},
-			"schema_version": newSchemaVer,
-		},
+		in:   yobj{"dns": yobj{"safesearch_enabled": false}},
+		want: defaultWantObj,
 		name: "disabled",
 	}}
 
@@ -1080,19 +1059,12 @@ func TestUpgradeSchema18to19(t *testing.T) {
 
 	const newSchemaVer = 19
 
+	// The mod doesn't support safe search, so only the old
+	// 'clients[].safesearch_enabled' field is dropped here.
 	defaultWantObj := yobj{
 		"clients": yobj{
 			"persistent": yarr{yobj{
 				"name": "localhost",
-				"safe_search": yobj{
-					"enabled":    true,
-					"bing":       true,
-					"duckduckgo": true,
-					"google":     true,
-					"pixabay":    true,
-					"yandex":     true,
-					"youtube":    true,
-				},
 			}},
 		},
 		"schema_version": newSchemaVer,
@@ -1133,21 +1105,7 @@ func TestUpgradeSchema18to19(t *testing.T) {
 				"persistent": yarr{yobj{"name": "localhost", "safesearch_enabled": false}},
 			},
 		},
-		want: yobj{
-			"clients": yobj{"persistent": yarr{yobj{
-				"name": "localhost",
-				"safe_search": yobj{
-					"enabled":    false,
-					"bing":       true,
-					"duckduckgo": true,
-					"google":     true,
-					"pixabay":    true,
-					"yandex":     true,
-					"youtube":    true,
-				},
-			}}},
-			"schema_version": newSchemaVer,
-		},
+		want: defaultWantObj,
 		name: "disabled",
 	}}
 
@@ -1299,21 +1257,14 @@ func TestUpgradeSchema20to21(t *testing.T) {
 			"schema_version": newSchemaVer,
 		},
 	}, {
-		name: "no_clients",
+		name: "blocked_services",
 		in: yobj{
 			"dns": yobj{
 				"blocked_services": yarr{"ok"},
 			},
 		},
 		want: yobj{
-			"dns": yobj{
-				"blocked_services": yobj{
-					"ids": yarr{"ok"},
-					"schedule": yobj{
-						"time_zone": "Local",
-					},
-				},
-			},
+			"dns":            yobj{},
 			"schema_version": newSchemaVer,
 		},
 	}}
@@ -1360,12 +1311,6 @@ func TestUpgradeSchema21to22(t *testing.T) {
 			"clients": yobj{
 				"persistent": []any{yobj{
 					"name": "localhost",
-					"blocked_services": yobj{
-						"ids": yarr{},
-						"schedule": yobj{
-							"time_zone": "Local",
-						},
-					},
 				}},
 			},
 			"schema_version": newSchemaVer,
@@ -1381,12 +1326,6 @@ func TestUpgradeSchema21to22(t *testing.T) {
 			"clients": yobj{
 				"persistent": []any{yobj{
 					"name": "localhost",
-					"blocked_services": yobj{
-						"ids": yarr{"ok"},
-						"schedule": yobj{
-							"time_zone": "Local",
-						},
-					},
 				}},
 			},
 			"schema_version": newSchemaVer,
@@ -1688,29 +1627,13 @@ func TestUpgradeSchema25to26(t *testing.T) {
 		want: yobj{
 			"dns": yobj{},
 			"filtering": yobj{
-				"filtering_enabled":       true,
-				"filters_update_interval": 24,
-				"parental_enabled":        false,
-				"safebrowsing_enabled":    false,
-				"safebrowsing_cache_size": 1048576,
-				"safesearch_cache_size":   1048576,
-				"parental_cache_size":     1048576,
-				"safe_search": yobj{
-					"enabled":    false,
-					"bing":       true,
-					"duckduckgo": true,
-					"google":     true,
-					"pixabay":    true,
-					"yandex":     true,
-					"youtube":    true,
-				},
-				"rewrites": yarr{},
-				"blocked_services": yobj{
-					"schedule": yobj{
-						"time_zone": "Local",
-					},
-					"ids": yarr{},
-				},
+				"filtering_enabled":         true,
+				"filters_update_interval":   24,
+				"parental_enabled":          false,
+				"safebrowsing_enabled":      false,
+				"safebrowsing_cache_size":   1048576,
+				"parental_cache_size":       1048576,
+				"rewrites":                  yarr{},
 				"protection_enabled":        true,
 				"blocking_mode":             "custom_ip",
 				"blocking_ipv4":             "1.2.3.4",

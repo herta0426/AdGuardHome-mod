@@ -22,15 +22,12 @@ import (
 //	'schema_version': 22
 //	'persistent':
 //	  - 'name': 'client_name'
-//	    'blocked_services':
-//	      'ids':
-//	      - 'svc_name'
-//	      - # …
-//	      'schedule':
-//	        'time_zone': 'Local'
 //	    # …
 //	  # …
 //	# …
+//
+// Upstream turned 'clients[].blocked_services' into an object with a schedule
+// here, but the mod doesn't support blocked services, so the field is dropped.
 func (m *Migrator) migrateTo22(_ context.Context, diskConf yobj) (err error) {
 	diskConf["schema_version"] = 22
 
@@ -53,20 +50,7 @@ func (m *Migrator) migrateTo22(_ context.Context, diskConf yobj) (err error) {
 			return fmt.Errorf("persistent client at index %d: unexpected type %T", i, p)
 		}
 
-		var services yarr
-		services, ok, err = fieldVal[yarr](c, field)
-		if err != nil {
-			return fmt.Errorf("persistent client at index %d: %w", i, err)
-		} else if !ok {
-			continue
-		}
-
-		c[field] = yobj{
-			"ids": services,
-			"schedule": yobj{
-				"time_zone": "Local",
-			},
-		}
+		delete(c, field)
 	}
 
 	return nil

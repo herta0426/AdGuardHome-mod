@@ -14,16 +14,11 @@ import "context"
 //	# AFTER:
 //	'schema_version': 18
 //	'dns':
-//	  'safe_search':
-//	    'enabled': true
-//	    'bing': true
-//	    'duckduckgo': true
-//	    'google': true
-//	    'pixabay': true
-//	    'yandex': true
-//	    'youtube': true
 //	  # …
 //	# …
+//
+// Upstream turned 'dns.safesearch_enabled' into 'dns.safe_search' here, but
+// the mod doesn't support safe search, so the old field is dropped instead.
 func (m *Migrator) migrateTo18(_ context.Context, diskConf yobj) (err error) {
 	diskConf["schema_version"] = 18
 
@@ -32,16 +27,7 @@ func (m *Migrator) migrateTo18(_ context.Context, diskConf yobj) (err error) {
 		return err
 	}
 
-	safeSearch := yobj{
-		"enabled":    true,
-		"bing":       true,
-		"duckduckgo": true,
-		"google":     true,
-		"pixabay":    true,
-		"yandex":     true,
-		"youtube":    true,
-	}
-	dns["safe_search"] = safeSearch
+	delete(dns, "safesearch_enabled")
 
-	return moveVal[bool](dns, safeSearch, "safesearch_enabled", "enabled")
+	return nil
 }

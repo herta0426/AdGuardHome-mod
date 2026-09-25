@@ -2,31 +2,14 @@ package configmigrate
 
 import "context"
 
-// migrateTo4 performs the following changes:
+// migrateTo4 only bumps the schema version.
 //
-//	# BEFORE:
-//	'schema_version': 3
-//	'clients':
-//	- # …
-//	# …
-//
-//	# AFTER:
-//	'schema_version': 4
-//	'clients':
-//	- 'use_global_blocked_services': true
-//	  # …
-//	# …
+// The sole change between the third and the fourth schema versions was the
+// 'clients[].use_global_blocked_services' field.  The mod does not support
+// blocked services at all, so the migration must not write it.  The function
+// is still required, because the upgrade chain cannot skip a version.
 func (m *Migrator) migrateTo4(_ context.Context, diskConf yobj) (err error) {
 	diskConf["schema_version"] = 4
-
-	clients, ok, _ := fieldVal[yarr](diskConf, "clients")
-	if ok {
-		for i := range clients {
-			if c, isYobj := clients[i].(yobj); isYobj {
-				c["use_global_blocked_services"] = true
-			}
-		}
-	}
 
 	return nil
 }
