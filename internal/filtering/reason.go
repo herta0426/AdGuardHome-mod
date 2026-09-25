@@ -64,10 +64,10 @@ var reasonNames = []string{
 	NotFilteredAllowList: "NotFilteredWhiteList",
 	NotFilteredError:     "NotFilteredError",
 
-	FilteredBlockList:      "FilteredBlackList",
-	FilteredSafeBrowsing:   "FilteredSafeBrowsing",
-	FilteredParental:       "FilteredParental",
-	FilteredInvalid:        "FilteredInvalid",
+	FilteredBlockList:    "FilteredBlackList",
+	FilteredSafeBrowsing: "FilteredSafeBrowsing",
+	FilteredParental:     "FilteredParental",
+	FilteredInvalid:      "FilteredInvalid",
 
 	Rewritten:          "Rewrite",
 	RewrittenAutoHosts: "RewriteEtcHosts",
