@@ -74,13 +74,12 @@ Versions are dates, for example `v2026-09-24`.  See `scripts/make/version.sh`.  
 
 ## Download and install
 
-Every release carries these files:
+Releases carry the arm64 build only, since that is what the phones and the Magisk module use:
 
-- `AdGuardHome_linux_amd64.tar.gz` — x86_64
 - `AdGuardHome_linux_arm64.tar.gz` — arm64
 - `checksums.txt` — SHA-256 hashes of the archives
 
-Download them from [Releases](https://github.com/liuzq2002/AdguardHome-Mod/releases), or run the workflow from the Actions tab and download the `AdGuardHome-linux` artifact.
+Download them from [Releases](https://github.com/liuzq2002/AdguardHome-Mod/releases).  The amd64 build is for local testing only and is not shipped in the releases; run the workflow from the Actions tab and download the `AdGuardHome-linux` artifact to get both the amd64 and the arm64 archives.
 
 ```sh
 tar -xzf AdGuardHome_linux_arm64.tar.gz

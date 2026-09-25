@@ -213,13 +213,28 @@ jobs:
             dist/AdGuardHome_linux_amd64.tar.gz
             dist/AdGuardHome_linux_arm64.tar.gz
 
+      # The releases carry the arm64 build only, since that is what the Magisk
+      # module and the phones use.  The amd64 build stays in the artifacts
+      # above, for local testing.  Keep the published checksums in sync with
+      # the published files.
+      - name: Keep the released checksums in sync
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          #!/bin/sh
+
+          set -e -f -u
+
+          grep 'AdGuardHome_linux_arm64\.tar\.gz$' dist/checksums.txt > dist/checksums.arm64.txt
+          mv dist/checksums.arm64.txt dist/checksums.txt
+
+          cat dist/checksums.txt
+
       - name: Publish the release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           files: |
             dist/checksums.txt
-            dist/AdGuardHome_linux_amd64.tar.gz
             dist/AdGuardHome_linux_arm64.tar.gz
           generate_release_notes: true
           make_latest: ${{ env.PRERELEASE == 'true' && 'false' || 'true' }}
@@ -230,9 +245,8 @@ jobs:
 
             tag 带 `-beta`、`-rc.1` 这类后缀时是**预发布**，供测试使用，不会抢占「最新版本」。
 
-            Linux x86_64 与 arm64 的发布包，解压后替换可执行文件即可。
+            发版只提供 Linux arm64 的发布包，解压后替换可执行文件即可。amd64 只用于本地测试，不随发版提供，需要的话到 Actions 页面下载 `AdGuardHome-linux` 产物。
 
-            - `AdGuardHome_linux_amd64.tar.gz` — x86_64
             - `AdGuardHome_linux_arm64.tar.gz` — arm64
             - `checksums.txt` — 压缩包的 SHA-256 校验和
 

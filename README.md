@@ -73,13 +73,12 @@ DNS 服务、过滤规则、查询日志、客户端管理、加密和 REST API 
 
 ## 下载与安装
 
-每次发版都会附上这些文件：
+发版只提供 arm64 的包（手机与 Magisk 模块用的就是这个）：
 
-- `AdGuardHome_linux_amd64.tar.gz` — x86_64
 - `AdGuardHome_linux_arm64.tar.gz` — arm64
 - `checksums.txt` — 压缩包的 SHA-256 校验和
 
-去 [Releases](https://github.com/liuzq2002/AdguardHome-Mod/releases) 下载，或者在 Actions 页面手动运行工作流并下载 `AdGuardHome-linux` 产物。
+去 [Releases](https://github.com/liuzq2002/AdguardHome-Mod/releases) 下载。amd64 只用于本地测试，不随发版提供；需要时在 Actions 页面手动运行工作流，下载 `AdGuardHome-linux` 产物，里面同时有 amd64 与 arm64 两个包。
 
 ```sh
 tar -xzf AdGuardHome_linux_arm64.tar.gz
