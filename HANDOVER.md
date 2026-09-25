@@ -9,9 +9,9 @@
 ## 1. 现状速览
 
 - 默认分支 `main`，当前 HEAD `bf485a1d`。里面是 PR #6（删页面与功能）、#7（README 中文优先）、#8（「精简版」改名「修改版 / Mod」）。
-- 已发布 `v2026-09-24`（预发布），产物三个：`AdGuardHome_linux_amd64.tar.gz`、`AdGuardHome_linux_arm64.tar.gz`、`checksums.txt`。
+- 已发布 `v2026-09-24`（预发布），产物：`AdGuardHome_linux_amd64.tar.gz`、`AdGuardHome_linux_arm64.tar.gz`、`checksums.txt`。**从下一个版本起**，Release 里只放 arm64：`AdGuardHome_linux_arm64.tar.gz` 与配套的 `checksums.txt`；amd64 只留在 Actions 的 `AdGuardHome-linux` 产物里，供本地测试。
 - 只支持 `linux/amd64` 与 `linux/arm64`，其它平台代码已经从仓库里删掉。
-- 版本号是日期格式 `vYYYY-MM-DD`，规则写在 `scripts/make/version.sh`：tag 精确匹配就用 tag，否则用最后一次提交的日期。正则只认 `^v[0-9]{4}-[0-9]{2}-[0-9]{2}$`。
+- 版本号是日期格式 `vYYYY-MM-DD`，规则写在 `scripts/make/version.sh`：tag 精确匹配就用 tag，否则用最后一次提交的日期。正则只认 `^v[0-9]{4}-[0-9]{2}-[0-9]{2}(-[0-9A-Za-z][0-9A-Za-z.]*)?$`，也就是允许 `-beta`、`-rc.1` 这类预发布后缀；带后缀的 tag 会被工作流按「预发布」发布。
 - 界面只保留 English、简体中文、繁體中文三种语言，语言清单在根目录 `.twosky.json`。
 
 ### 远程与分支
@@ -212,11 +212,12 @@ git tag v2026-09-25
 git -c credential.helper=manager push liuzq v2026-09-25
 ```
 
-7. 工作流 `.github/workflows/build-linux.yml` 自动接管：先跑 lint 与测试，再构建两个架构，最后把 `dist/` 里的三个文件附到 Release 上。
+7. 工作流 `.github/workflows/build-linux.yml` 自动接管：先跑 lint 与测试，再构建两个架构，把两个架构都上传成 Actions 产物（`AdGuardHome-linux`，amd64 供本地测试），最后只把 arm64 的压缩包与过滤后的 `checksums.txt` 附到 Release 上。
 
 几个细节：
 
-- 同一天要重发：`version.sh` 只认 `vYYYY-MM-DD`，所以要么删掉旧 Release 与 tag 后在同一个提交上重建同名 tag，要么等第二天再打。
+- 预发布：tag 写成 `vYYYY-MM-DD-beta`、`vYYYY-MM-DD-rc.1` 这类带后缀的形式，工作流会按「预发布」发布，且不会抢占「最新版本」。正式版再用纯日期的 tag。
+- 同一天要重发：换个后缀（例如 `-beta.2`）最省事；也可以删掉旧 Release 与 tag 后在同一个提交上重建同名 tag，或等第二天再打。
 - 手动试构建（不打 tag）：在 Actions 页面手动 `workflow_dispatch`，产物在 Artifacts 里，验证没问题再打 tag。
 - Release 说明是中文的，写在 workflow 里；改发版文案就改那里。
 
