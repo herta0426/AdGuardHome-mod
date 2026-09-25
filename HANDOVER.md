@@ -171,6 +171,15 @@ mkdir -p /tmp/agh-check && cp doc/AdGuardHome.yaml.example /tmp/agh-check/AdGuar
 
 注意：`--check-config -c <不在工作目录里的文件>` 会走「首次启动」分支并真的起一个服务，别那样用。
 
+### 更新机制与换更新源
+
+面板里的「检查更新 / 立即更新」原本指向官方更新源 `https://static.adtidy.org/adguardhome/<channel>/version.json`。官方那份只描述官方构建，所以 mod 改成读自己仓库根目录的 `version.json`：
+
+- 默认地址写在 `internal/updater/updater.go` 的 `DefaultVersionURL()`：`https://raw.githubusercontent.com/liuzq2002/AdguardHome-Mod/main/version.json`。
+- 文件的格式与官方一致，至少要有 `version`、`announcement`、`announcement_url`，以及对应平台的 `download_<os>_<arch>`（mod 只发布 arm64，所以是 `download_linux_arm64`）。**每个值都不能为空**，缺键或空值会让检查直接报错。
+- `internal/home/home.go` 的 `isUpdateEnabled()` 决定是否检查：`--no-check-update` 会关掉；非 linux/arm64（例如本地测试的 amd64）也关掉，因为发版没有对应的包；配置了自定义更新地址时则强制打开。
+- 换源：把 `unsafe_use_custom_update_index_url` 设为 `true`，并用环境变量 `ADGUARD_HOME_TEST_UPDATE_VERSION_URL` 指定新地址（例如 `https://ghfast.top/https://raw.githubusercontent.com/liuzq2002/AdguardHome-Mod/main/version.json` 或 jsDelivr 的 `https://cdn.jsdelivr.net/gh/liuzq2002/AdguardHome-Mod@main/version.json`）。release 构建同样生效。
+
 ## 6. 手动跑起来验证
 
 改完接口或页面，最靠谱的验证是真的把二进制跑起来。准备一个干净的工作目录（不要用手机上或本机在跑的实例）：
@@ -212,7 +221,7 @@ git tag v2026-09-25
 git -c credential.helper=manager push liuzq v2026-09-25
 ```
 
-7. 工作流 `.github/workflows/build-linux.yml` 自动接管：先跑 lint 与测试，再构建两个架构，把两个架构都上传成 Actions 产物（`AdGuardHome-linux`，amd64 供本地测试），最后只把 arm64 的压缩包与过滤后的 `checksums.txt` 附到 Release 上。
+7. 工作流 `.github/workflows/build-linux.yml` 自动接管：先跑 lint 与测试，再构建两个架构，把两个架构都上传成 Actions 产物（`AdGuardHome-linux`，amd64 供本地测试），只把 arm64 的压缩包与过滤后的 `checksums.txt` 附到 Release 上，最后把仓库根目录的 `version.json` 改成这次的版本号、发布页地址与 arm64 压缩包地址并提交回默认分支（在线更新靠它）。
 
 几个细节：
 
