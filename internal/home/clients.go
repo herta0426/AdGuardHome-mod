@@ -70,7 +70,6 @@ func (clients *clientsContainer) Init(
 	ctx context.Context,
 	baseLogger *slog.Logger,
 	objects []*clientObject,
-	dhcpServer client.DHCP,
 	etcHosts *aghnet.HostsContainer,
 	arpDB arpdb.Interface,
 	filteringConf *filtering.Config,
@@ -115,11 +114,9 @@ func (clients *clientsContainer) Init(
 		Logger:                 baseLogger.With(slogutil.KeyPrefix, "client_storage"),
 		Clock:                  timeutil.SystemClock{},
 		InitialClients:         confClients,
-		DHCP:                   dhcpServer,
 		EtcHosts:               hosts,
 		ARPDB:                  arpDB,
 		ARPClientsUpdatePeriod: arpClientsUpdatePeriod,
-		RuntimeSourceDHCP:      config.Clients.Sources.DHCP,
 	})
 	if err != nil {
 		return fmt.Errorf("init client storage: %w", err)
@@ -167,10 +164,10 @@ type clientObject struct {
 	// UpstreamsCacheEnabled indicates if the DNS cache is enabled.
 	UpstreamsCacheEnabled bool `yaml:"upstreams_cache_enabled"`
 
-	UseGlobalSettings        bool `yaml:"use_global_settings"`
-	FilteringEnabled         bool `yaml:"filtering_enabled"`
-	ParentalEnabled          bool `yaml:"parental_enabled"`
-	SafeBrowsingEnabled      bool `yaml:"safebrowsing_enabled"`
+	UseGlobalSettings   bool `yaml:"use_global_settings"`
+	FilteringEnabled    bool `yaml:"filtering_enabled"`
+	ParentalEnabled     bool `yaml:"parental_enabled"`
+	SafeBrowsingEnabled bool `yaml:"safebrowsing_enabled"`
 
 	IgnoreQueryLog   bool `yaml:"ignore_querylog"`
 	IgnoreStatistics bool `yaml:"ignore_statistics"`
@@ -229,14 +226,14 @@ func (clients *clientsContainer) forConfig() (objs []*clientObject) {
 
 			UID: cli.UID,
 
-			UseGlobalSettings:        !cli.UseOwnSettings,
-			FilteringEnabled:         cli.FilteringEnabled,
-			ParentalEnabled:          cli.ParentalEnabled,
-			SafeBrowsingEnabled:      cli.SafeBrowsingEnabled,
-			IgnoreQueryLog:           cli.IgnoreQueryLog,
-			IgnoreStatistics:         cli.IgnoreStatistics,
-			UpstreamsCacheEnabled:    cli.UpstreamsCacheEnabled,
-			UpstreamsCacheSize:       cli.UpstreamsCacheSize,
+			UseGlobalSettings:     !cli.UseOwnSettings,
+			FilteringEnabled:      cli.FilteringEnabled,
+			ParentalEnabled:       cli.ParentalEnabled,
+			SafeBrowsingEnabled:   cli.SafeBrowsingEnabled,
+			IgnoreQueryLog:        cli.IgnoreQueryLog,
+			IgnoreStatistics:      cli.IgnoreStatistics,
+			UpstreamsCacheEnabled: cli.UpstreamsCacheEnabled,
+			UpstreamsCacheSize:    cli.UpstreamsCacheSize,
 		})
 
 		return true

@@ -10,14 +10,6 @@ dns:
   protection_enabled: true
   filtering_enabled: true
   safebrowsing_enabled: false
-  safe_search:
-    enabled:    false
-    bing:       true
-    duckduckgo: true
-    google:     true
-    pixabay:    true
-    yandex:     true
-    youtube:    true
   parental_enabled: false
   parental_sensitivity: 0
   blocked_response_ttl: 10

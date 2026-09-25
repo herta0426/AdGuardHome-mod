@@ -58,15 +58,15 @@ var filteringStatusValues = container.NewMapSet(
 
 // reasonCodes is a set of all valid reason codes.
 var reasonCodes = [...]string{
-	filtering.NotFilteredAllowList:   "1",
-	filtering.NotFilteredError:       "2",
-	filtering.FilteredBlockList:      "3",
-	filtering.FilteredSafeBrowsing:   "4",
-	filtering.FilteredParental:       "5",
-	filtering.FilteredInvalid:        "6",
-	filtering.Rewritten:              "9",
-	filtering.RewrittenAutoHosts:     "10",
-	filtering.RewrittenRule:          "11",
+	filtering.NotFilteredAllowList: "1",
+	filtering.NotFilteredError:     "2",
+	filtering.FilteredBlockList:    "3",
+	filtering.FilteredSafeBrowsing: "4",
+	filtering.FilteredParental:     "5",
+	filtering.FilteredInvalid:      "6",
+	filtering.Rewritten:            "9",
+	filtering.RewrittenAutoHosts:   "10",
+	filtering.RewrittenRule:        "11",
 }
 
 // searchCriterion is a search criterion that is used to match a record.

@@ -26,20 +26,7 @@ filtering:
   filtering_enabled: true
   parental_enabled: false
   safebrowsing_enabled: false
-  safe_search:
-    enabled:    false
-    bing:       true
-    duckduckgo: true
-    google:     true
-    pixabay:    true
-    yandex:     true
-    youtube:    true
   protection_enabled: true
-  blocked_services:
-    schedule:
-      time_zone: Local
-    ids:
-    - 500px
   blocked_response_ttl: 10
 filters:
 - url: https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt

@@ -1,0 +1,208 @@
+# AdGuard Home Mod 配置参考模板（schema 34）。
+#
+# 这不是安装必需的文件：程序第一次启动时会自己生成一份同结构的配置。它主要用来
+# 对照检查、手工改配置，以及确认「哪些键属于已删除功能」。
+#
+# 与官方原版的区别：本 Mod 删掉了「安全搜索」和「已阻止的服务」，因此下面没有
+#   - dns.safe_search / dns.safesearch_cache_size / dns.blocked_services
+#   - clients[].safe_search / clients[].blocked_services /
+#     clients[].blocked_services_schedule / clients[].use_global_blocked_services
+# 这些键。官方版本写出的配置里可能还带着它们（尤其是已经升到 schema 34 的旧配置），
+# 程序会直接忽略，不会报错；只有在触发配置迁移时才会顺手删掉。
+#
+# 用法：
+#   1. 备份现有 AdGuardHome.yaml；
+#   2. 参照本文件改配置；
+#   3. 用 `AdGuardHome --check-config -w <工作目录>` 校验。
+
+http:
+  pprof:
+    port: 6060
+    enabled: false
+  # DoH 路由。Mod 保留了 /control/tls/* 接口与 DoH 服务，只删了 Web 界面里的
+  # 「加密设置」页面。
+  doh:
+    routes:
+      - GET /dns-query
+      - POST /dns-query
+      - GET /dns-query/{ClientID}
+      - POST /dns-query/{ClientID}
+    insecure_enabled: false
+  # 管理界面监听地址，默认 127.0.0.1:3000。
+  address: 127.0.0.1:3000
+  session_ttl: 30d
+# 登录管理界面的用户，密码是 bcrypt 哈希。留空数组表示还没初始化，程序会引导
+# 你走一次设置流程。
+users: []
+auth_attempts: 5
+block_auth_min: 15
+http_proxy: ""
+# 界面语言：留空按浏览器判断，可选 en、zh-cn、zh-tw。
+language: ""
+theme: auto
+
+dns:
+  bind_hosts:
+    - 127.0.0.1
+  # DNS 监听端口。Magisk 模块会在开机时自己改写这个值。
+  port: 53
+  anonymize_client_ip: false
+  ratelimit: 20
+  ratelimit_subnet_len_ipv4: 24
+  ratelimit_subnet_len_ipv6: 56
+  ratelimit_whitelist: []
+  refuse_any: true
+  # 上游 DNS 与引导 DNS，按需替换成自己的。
+  upstream_dns:
+    - https://dns10.quad9.net/dns-query
+  upstream_dns_file: ""
+  bootstrap_dns:
+    - 9.9.9.10
+    - 149.112.112.10
+    - 2620:fe::10
+    - 2620:fe::fe:10
+  fallback_dns: []
+  upstream_mode: load_balance
+  fastest_timeout: 1s
+  allowed_clients: []
+  disallowed_clients: []
+  blocked_hosts:
+    - version.bind
+    - id.server
+    - hostname.bind
+  trusted_proxies:
+    - 127.0.0.0/8
+    - ::1/128
+  cache_enabled: true
+  cache_size: 4194304
+  cache_ttl_min: 0
+  cache_ttl_max: 0
+  cache_optimistic: false
+  cache_optimistic_answer_ttl: 30s
+  cache_optimistic_max_age: 12h
+  bogus_nxdomain: []
+  aaaa_disabled: false
+  enable_dnssec: true
+  edns_client_subnet:
+    custom_ip: ""
+    enabled: false
+    use_custom: false
+  max_goroutines: 300
+  handle_ddr: true
+  ipset: []
+  ipset_file: ""
+  bootstrap_prefer_ipv6: false
+  upstream_timeout: 10s
+  private_networks: []
+  use_private_ptr_resolvers: true
+  local_ptr_upstreams: []
+  use_dns64: false
+  dns64_prefixes: []
+  serve_http3: false
+  use_http3_upstreams: false
+  # 是否监听普通（未加密）DNS。设为 false 就只保留 DoT/DoH/DoQ 等加密方式。
+  serve_plain_dns: true
+  hostsfile_enabled: true
+  pending_requests:
+    enabled: true
+
+# TLS / 加密 DNS 的配置。Web 界面里的「加密设置」页面已经删掉，但后端接口
+# （/control/tls/status|configure|validate）和这里的行为都保留着，可以直接改这个
+# 段落来启用 DoT/DoQ/DoH。
+tls:
+  enabled: false
+  server_name: ""
+  force_https: false
+  port_https: 443
+  port_dns_over_tls: 853
+  port_dns_over_quic: 853
+  port_dnscrypt: 0
+  dnscrypt_config_file: ""
+  certificate_chain: ""
+  private_key: ""
+  certificate_path: ""
+  private_key_path: ""
+  strict_sni_check: false
+
+querylog:
+  dir_path: ""
+  ignored: []
+  interval: 90d
+  size_memory: 1000
+  enabled: true
+  ignored_enabled: false
+  file_enabled: true
+statistics:
+  dir_path: ""
+  ignored: []
+  interval: 1d
+  enabled: true
+  ignored_enabled: false
+
+# 拦截列表与自定义规则。
+filters:
+  - enabled: true
+    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt
+    name: AdGuard DNS filter
+    id: 1
+  - enabled: false
+    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_2.txt
+    name: AdAway Default Blocklist
+    id: 2
+whitelist_filters: []
+user_rules: []
+
+filtering:
+  blocking_ipv4: ""
+  blocking_ipv6: ""
+  protection_disabled_until: null
+  # Mod 只保留默认拦截模式，其它模式（REFUSED / NXDOMAIN / NULL IP / 自定义 IP）
+  # 的后端实现还在，但界面上选不了。
+  blocking_mode: default
+  # 家长控制与「拦截恶意软件/钓鱼网站」没有被删，配置与界面都在。
+  parental_block_host: family-block.dns.adguard.com
+  safebrowsing_block_host: standard-block.dns.adguard.com
+  rewrites: []
+  # 工作目录下 userfilters 里的本地规则文件；Magisk 模块用的是 /data/adb/agh/bin。
+  safe_fs_patterns:
+    - /data/adb/agh/bin/data/userfilters/*
+  max_http_size: 256MB
+  safebrowsing_cache_size: 1048576
+  parental_cache_size: 1048576
+  cache_time: 30
+  filters_update_interval: 24
+  blocked_response_ttl: 10
+  filtering_enabled: true
+  rewrites_enabled: true
+  parental_enabled: false
+  safebrowsing_enabled: false
+  protection_enabled: true
+
+# 客户端的持久化配置。Mod 删掉了「客户端设置」界面，但这一段与 /control/clients
+# 接口还保留着（第三方管理器要读）；官方版本写的 safe_search / blocked_services /
+# use_global_blocked_services 等键在这里没有意义，写上也会被忽略。
+clients:
+  # DHCP 服务器已整个移除，所以这里没有 runtime_sources.dhcp。
+  runtime_sources:
+    whois: true
+    arp: true
+    rdns: true
+    hosts: true
+  persistent: []
+
+log:
+  file: ""
+  max_age: 3
+  max_backups: 0
+  max_size: 100
+  compress: false
+  enabled: true
+  local_time: false
+  verbose: false
+
+os:
+  group: ""
+  user: ""
+  rlimit_nofile: 0
+
+schema_version: 34

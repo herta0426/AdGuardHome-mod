@@ -5,7 +5,6 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agh"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
-	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/require"
@@ -23,7 +22,6 @@ func newClientsContainer(tb testing.TB) (c *clientsContainer) {
 		ctx,
 		testLogger,
 		nil,
-		client.EmptyDHCP{},
 		nil,
 		nil,
 		&filtering.Config{

@@ -1,10 +1,6 @@
 package configmigrate
 
-import (
-	"context"
-
-	"github.com/AdguardTeam/golibs/logutil/slogutil"
-)
+import "context"
 
 // migrateTo19 performs the following changes:
 //
@@ -23,18 +19,14 @@ import (
 //	'clients':
 //	  'persistent':
 //	  - 'name': 'client-name'
-//	    'safe_search':
-//	      'enabled': true
-//		  'bing': true
-//		  'duckduckgo': true
-//		  'google': true
-//		  'pixabay': true
-//		  'yandex': true
-//		  'youtube': true
 //	    # …
 //	  # …
 //	# …
-func (m *Migrator) migrateTo19(ctx context.Context, diskConf yobj) (err error) {
+//
+// Upstream turned 'clients[].safesearch_enabled' into
+// 'clients[].safe_search' here, but the mod doesn't support safe search, so the
+// old field is dropped instead.
+func (m *Migrator) migrateTo19(_ context.Context, diskConf yobj) (err error) {
 	diskConf["schema_version"] = 19
 
 	clients, ok, err := fieldVal[yobj](diskConf, "clients")
@@ -54,22 +46,7 @@ func (m *Migrator) migrateTo19(ctx context.Context, diskConf yobj) (err error) {
 			continue
 		}
 
-		safeSearch := yobj{
-			"enabled":    true,
-			"bing":       true,
-			"duckduckgo": true,
-			"google":     true,
-			"pixabay":    true,
-			"yandex":     true,
-			"youtube":    true,
-		}
-
-		err = moveVal[bool](c, safeSearch, "safesearch_enabled", "enabled")
-		if err != nil {
-			m.logger.DebugContext(ctx, "migrating to", "version", 19, slogutil.KeyError, err)
-		}
-
-		c["safe_search"] = safeSearch
+		delete(c, "safesearch_enabled")
 	}
 
 	return nil

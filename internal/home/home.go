@@ -28,7 +28,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghslog"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/arpdb"
-	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/hashprefix"
@@ -54,11 +53,10 @@ type homeContext struct {
 	// Modules
 	// --
 
-	clients    clientsContainer   // per-client-settings module
-	stats      stats.Interface    // statistics module
-	queryLog   querylog.QueryLog  // query log module
-	dnsServer  *dnsforward.Server // DNS module
-	dhcpServer dhcpd.Interface    // DHCP module
+	clients   clientsContainer   // per-client-settings module
+	stats     stats.Interface    // statistics module
+	queryLog  querylog.QueryLog  // query log module
+	dnsServer *dnsforward.Server // DNS module
 
 	filters *filtering.DNSFilter // DNS filtering module
 
@@ -335,23 +333,6 @@ func initContextClients(
 	workDir string,
 	hc *aghnet.HostsContainer,
 ) (err error) {
-	//lint:ignore SA1019 Migration is not over.
-	config.DHCP.WorkDir = workDir
-	config.DHCP.DataDir = filepath.Join(workDir, dataDir)
-	config.DHCP.HTTPReg = httpReg
-	config.DHCP.CommandConstructor = executil.SystemCommandConstructor{}
-	config.DHCP.Logger = logger.With(slogutil.KeyPrefix, "dhcpd")
-	config.DHCP.ConfModifier = confModifier
-
-	globalContext.dhcpServer, err = dhcpd.Create(ctx, config.DHCP)
-	if globalContext.dhcpServer == nil || err != nil {
-		// TODO(a.garipov): There are a lot of places in the code right
-		// now which assume that the DHCP server can be nil despite this
-		// condition.  Inspect them and perhaps rewrite them to use
-		// Enabled() instead.
-		return fmt.Errorf("initing dhcp: %w", err)
-	}
-
 	var arpDB arpdb.Interface
 	if config.Clients.Sources.ARP {
 		arpDB = arpdb.New(logger.With(slogutil.KeyError, "arpdb"))
@@ -361,7 +342,6 @@ func initContextClients(
 		ctx,
 		logger,
 		config.Clients.Persistent,
-		globalContext.dhcpServer,
 		hc,
 		arpDB,
 		config.Filtering,
@@ -909,13 +889,6 @@ func runDNSServer(
 			fatalOnError(ctx, slogLogger, startErr)
 		}
 	}()
-
-	if globalContext.dhcpServer != nil {
-		err = globalContext.dhcpServer.Start(ctx)
-		if err != nil {
-			slogLogger.ErrorContext(ctx, "starting dhcp server", slogutil.KeyError, err)
-		}
-	}
 }
 
 // newTLSManager initializes TLS manager.  baseLogger, sigHdlr, and confModifier
@@ -1239,13 +1212,6 @@ func cleanup(ctx context.Context, l *slog.Logger, hc *aghnet.HostsContainer) {
 		l.ErrorContext(ctx, "stopping dns server", slogutil.KeyError, err)
 	}
 
-	if globalContext.dhcpServer != nil {
-		err = globalContext.dhcpServer.Stop()
-		if err != nil {
-			l.ErrorContext(ctx, "stopping dhcp server", slogutil.KeyError, err)
-		}
-	}
-
 	if hc != nil {
 		if err = hc.Close(); err != nil {
 			l.ErrorContext(ctx, "closing hosts container", slogutil.KeyError, err)
@@ -1383,8 +1349,8 @@ func detectFirstRun(ctx context.Context, l *slog.Logger, workDir, confPath strin
 
 // jsonError is a generic JSON error response.
 //
-// TODO(a.garipov): Merge together with the implementations in [dhcpd] and other
-// packages after refactoring the web handler registering.
+// TODO(a.garipov): Merge together with the implementations in other packages
+// after refactoring the web handler registering.
 type jsonError struct {
 	// Message is the error message, an opaque string.
 	Message string `json:"message"`

@@ -68,11 +68,6 @@ clients:
       pixabay:    true
       yandex:     true
       youtube:    true
-    blocked_services:
-      schedule:
-        time_zone: Local
-      ids:
-      - 500px
   runtime_sources:
     whois: true
     arp:   true

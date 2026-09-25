@@ -49,21 +49,8 @@ import (
 //	  'parental_enabled': false
 //	  'safebrowsing_enabled': false
 //	  'safebrowsing_cache_size': 1048576
-//	  'safesearch_cache_size': 1048576
 //	  'parental_cache_size': 1048576
-//	  'safe_search':
-//	    'enabled': false
-//	    'bing': true
-//	    'duckduckgo': true
-//	    'google': true
-//	    'pixabay': true
-//	    'yandex': true
-//	    'youtube': true
 //	  'rewrites': []
-//	  'blocked_services':
-//	    'schedule':
-//	      'time_zone': 'Local'
-//	    'ids': []
 //	  'protection_enabled':        true,
 //	  'blocking_mode':             'custom_ip',
 //	  'blocking_ipv4':             '1.2.3.4',
@@ -75,6 +62,10 @@ import (
 //	'dns'
 //	  # …
 //	# …
+//
+// The 'safesearch_cache_size', 'safe_search', and 'blocked_services' fields
+// belong to the features the mod doesn't support, so they are dropped instead
+// of being moved into the 'filtering' section.
 func (m *Migrator) migrateTo26(_ context.Context, diskConf yobj) (err error) {
 	diskConf["schema_version"] = 26
 
@@ -83,6 +74,11 @@ func (m *Migrator) migrateTo26(_ context.Context, diskConf yobj) (err error) {
 		return err
 	}
 
+	// These fields belong to the features the mod doesn't support.
+	delete(dns, "safesearch_cache_size")
+	delete(dns, "safe_search")
+	delete(dns, "blocked_services")
+
 	filteringObj := yobj{}
 	err = errors.Join(
 		moveSameVal[bool](dns, filteringObj, "filtering_enabled"),
@@ -90,11 +86,8 @@ func (m *Migrator) migrateTo26(_ context.Context, diskConf yobj) (err error) {
 		moveSameVal[bool](dns, filteringObj, "parental_enabled"),
 		moveSameVal[bool](dns, filteringObj, "safebrowsing_enabled"),
 		moveSameVal[int](dns, filteringObj, "safebrowsing_cache_size"),
-		moveSameVal[int](dns, filteringObj, "safesearch_cache_size"),
 		moveSameVal[int](dns, filteringObj, "parental_cache_size"),
-		moveSameVal[yobj](dns, filteringObj, "safe_search"),
 		moveSameVal[yarr](dns, filteringObj, "rewrites"),
-		moveSameVal[yobj](dns, filteringObj, "blocked_services"),
 		moveSameVal[bool](dns, filteringObj, "protection_enabled"),
 		moveSameVal[string](dns, filteringObj, "blocking_mode"),
 		moveSameVal[string](dns, filteringObj, "blocking_ipv4"),

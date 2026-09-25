@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/arpdb"
-	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/whois"
 	"github.com/AdguardTeam/dnsproxy/proxy"
@@ -50,37 +49,6 @@ var allowedTags = []string{
 	"user_regular",
 }
 
-// DHCP is an interface for accessing DHCP lease data the [Storage] needs.
-type DHCP interface {
-	// Leases returns all the DHCP leases.
-	Leases() (leases []*dhcpsvc.Lease)
-
-	// HostByIP returns the hostname of the DHCP client with the given IP
-	// address.  host will be empty if there is no such client, due to an
-	// assumption that a DHCP client must always have a hostname.
-	HostByIP(ip netip.Addr) (host string)
-
-	// MACByIP returns the MAC address for the given IP address leased.  It
-	// returns nil if there is no such client, due to an assumption that a DHCP
-	// client must always have a MAC address.
-	MACByIP(ip netip.Addr) (mac net.HardwareAddr)
-}
-
-// EmptyDHCP is the empty [DHCP] implementation that does nothing.
-type EmptyDHCP struct{}
-
-// type check
-var _ DHCP = EmptyDHCP{}
-
-// Leases implements the [DHCP] interface for emptyDHCP.
-func (EmptyDHCP) Leases() (leases []*dhcpsvc.Lease) { return nil }
-
-// HostByIP implements the [DHCP] interface for emptyDHCP.
-func (EmptyDHCP) HostByIP(_ netip.Addr) (host string) { return "" }
-
-// MACByIP implements the [DHCP] interface for emptyDHCP.
-func (EmptyDHCP) MACByIP(_ netip.Addr) (mac net.HardwareAddr) { return nil }
-
 // HostsContainer is an interface for receiving updates to the system hosts
 // file.
 type HostsContainer interface {
@@ -101,10 +69,6 @@ type StorageConfig struct {
 	// not be nil.
 	Clock timeutil.Clock
 
-	// DHCP is used to match IPs against MACs of persistent clients and update
-	// [SourceDHCP] runtime client information.  It must not be nil.
-	DHCP DHCP
-
 	// EtcHosts is used to update [SourceHostsFile] runtime client information.
 	EtcHosts HostsContainer
 
@@ -118,10 +82,6 @@ type StorageConfig struct {
 	// ARPClientsUpdatePeriod defines how often [SourceARP] runtime client
 	// information is updated.
 	ARPClientsUpdatePeriod time.Duration
-
-	// RuntimeSourceDHCP specifies whether to update [SourceDHCP] information
-	// of runtime clients.
-	RuntimeSourceDHCP bool
 }
 
 // Storage contains information about persistent and runtime clients.
@@ -142,9 +102,6 @@ type Storage struct {
 	// upstreamManager stores and updates custom client upstream configurations.
 	upstreamManager *upstreamManager
 
-	// dhcp is used to update [SourceDHCP] runtime client information.
-	dhcp DHCP
-
 	// etcHosts is used to update [SourceHostsFile] runtime client information.
 	etcHosts HostsContainer
 
@@ -163,10 +120,6 @@ type Storage struct {
 	// arpClientsUpdatePeriod defines how often [SourceARP] runtime client
 	// information is updated.  It must be greater than zero.
 	arpClientsUpdatePeriod time.Duration
-
-	// runtimeSourceDHCP specifies whether to update [SourceDHCP] information
-	// of runtime clients.
-	runtimeSourceDHCP bool
 }
 
 // NewStorage returns initialized client storage.  conf must not be nil.
@@ -180,13 +133,11 @@ func NewStorage(ctx context.Context, conf *StorageConfig) (s *Storage, err error
 		index:                  newIndex(),
 		runtimeIndex:           newRuntimeIndex(),
 		upstreamManager:        newUpstreamManager(conf.BaseLogger, conf.Clock),
-		dhcp:                   conf.DHCP,
 		etcHosts:               conf.EtcHosts,
 		arpDB:                  conf.ARPDB,
 		done:                   make(chan struct{}),
 		allowedTags:            tags,
 		arpClientsUpdatePeriod: conf.ARPClientsUpdatePeriod,
-		runtimeSourceDHCP:      conf.RuntimeSourceDHCP,
 	}
 
 	for i, p := range conf.InitialClients {
@@ -357,33 +308,6 @@ func (s *Storage) UpdateAddress(ctx context.Context, ip netip.Addr, host string,
 	if info != nil {
 		s.setWHOISInfo(ctx, ip, info)
 	}
-}
-
-// UpdateDHCP updates [SourceDHCP] runtime client information.
-func (s *Storage) UpdateDHCP(ctx context.Context) {
-	if s.dhcp == nil || !s.runtimeSourceDHCP {
-		return
-	}
-
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	src := SourceDHCP
-	s.runtimeIndex.clearSource(src)
-
-	added := 0
-	for _, l := range s.dhcp.Leases() {
-		s.runtimeIndex.setInfo(l.IP, src, []string{l.Hostname})
-		added++
-	}
-
-	removed := s.runtimeIndex.removeEmpty()
-	s.logger.DebugContext(
-		ctx,
-		"updating client aliases from dhcp",
-		"added", added,
-		"removed", removed,
-	)
 }
 
 // setWHOISInfo sets the WHOIS information for a runtime client.
@@ -571,11 +495,6 @@ func (s *Storage) findByIP(addr netip.Addr) (p *Persistent, ok bool) {
 		return p, true
 	}
 
-	foundMAC := s.dhcp.MACByIP(addr)
-	if foundMAC != nil {
-		return s.index.findByMAC(foundMAC)
-	}
-
 	return nil, false
 }
 
@@ -595,11 +514,6 @@ func (s *Storage) FindLoose(ip netip.Addr, id string) (p *Persistent, ok bool) {
 	p, ok = s.index.find(id)
 	if ok {
 		return p.ShallowClone(), ok
-	}
-
-	foundMAC := s.dhcp.MACByIP(ip)
-	if foundMAC != nil {
-		return s.index.findByMAC(foundMAC)
 	}
 
 	p = s.index.findByIPWithoutZone(ip)
@@ -692,27 +606,7 @@ func (s *Storage) ClientRuntime(ip netip.Addr) (rc *Runtime) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	rc = s.runtimeIndex.client(ip)
-	if !s.runtimeSourceDHCP {
-		return rc.clone()
-	}
-
-	// SourceHostsFile > SourceDHCP, so return immediately if the client is from
-	// the hosts file.
-	if rc != nil && rc.hostsFile != nil {
-		return rc.clone()
-	}
-
-	// Otherwise, check the DHCP server and add the client information if there
-	// is any.
-	host := s.dhcp.HostByIP(ip)
-	if host == "" {
-		return rc.clone()
-	}
-
-	rc = s.runtimeIndex.setInfo(ip, SourceDHCP, []string{host})
-
-	return rc.clone()
+	return s.runtimeIndex.client(ip).clone()
 }
 
 // RangeRuntime calls f for each runtime client in an undefined order.
@@ -775,13 +669,6 @@ func (s *Storage) ApplyClientFiltering(id string, addr netip.Addr, setts *filter
 	c, ok := s.index.findByClientID(ClientID(id))
 	if !ok {
 		c, ok = s.index.findByIP(addr)
-	}
-
-	if !ok {
-		foundMAC := s.dhcp.MACByIP(addr)
-		if foundMAC != nil {
-			c, ok = s.index.findByMAC(foundMAC)
-		}
 	}
 
 	if !ok {
