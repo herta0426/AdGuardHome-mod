@@ -147,7 +147,20 @@ jobs:
           echo "APP_VERSION=${app_version}" >> "$GITHUB_ENV"
           echo "version=${app_version}" >> "$GITHUB_OUTPUT"
 
-          printf 'Building version %s (channel %s)\n' "${app_version}" "${CHANNEL}"
+          # A version with a suffix, for example v2026-09-23-beta, is published
+          # as a pre-release and never becomes the latest release.
+          case "${app_version}" in
+          v[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9])
+            prerelease='false'
+            ;;
+          *)
+            prerelease='true'
+            ;;
+          esac
+          echo "PRERELEASE=${prerelease}" >> "$GITHUB_ENV"
+
+          printf 'Building version %s (channel %s, prerelease %s)\n' \
+            "${app_version}" "${CHANNEL}" "${prerelease}"
 
       - name: Install the frontend dependencies
         run: make js-deps
@@ -209,7 +222,14 @@ jobs:
             dist/AdGuardHome_linux_amd64.tar.gz
             dist/AdGuardHome_linux_arm64.tar.gz
           generate_release_notes: true
+          make_latest: ${{ env.PRERELEASE == 'true' && 'false' || 'true' }}
+          name: AdGuard Home Mod ${{ env.APP_VERSION }}
+          prerelease: ${{ env.PRERELEASE == 'true' }}
           body: |
+            这是 AdGuard Home 的修改版（Mod）。
+
+            tag 带 `-beta`、`-rc.1` 这类后缀时是**预发布**，供测试使用，不会抢占「最新版本」。
+
             Linux x86_64 与 arm64 的发布包，解压后替换可执行文件即可。
 
             - `AdGuardHome_linux_amd64.tar.gz` — x86_64
@@ -223,4 +243,4 @@ jobs:
             sha256sum -c --ignore-missing checksums.txt
             ```
 
-            这是 AdGuard Home 的非官方修改版（Mod），主要为 Adguard-Home-For-Magisk-Mod 适配。改动内容、构建方式与上游同步方法见仓库首页的 README。
+            主要为 Adguard-Home-For-Magisk-Mod 适配。改动内容、构建方式与上游同步方法见仓库首页的 README。

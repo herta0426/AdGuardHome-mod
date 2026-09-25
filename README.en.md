@@ -70,7 +70,7 @@ Kept on purpose, not forgotten:
 
 This project does more than remove things: more features and adjustments of our own are on the way, and all of them are listed in [CHANGELOG.md](CHANGELOG.md).
 
-Versions are dates, for example `v2026-09-24`.  See `scripts/make/version.sh`.
+Versions are dates, for example `v2026-09-24`.  See `scripts/make/version.sh`.  Pre-releases add a suffix to the date, for example `v2026-09-25-beta` or `v2026-09-25-rc.1`; tags with a suffix are published as GitHub pre-releases and never become the latest release.
 
 ## Download and install
 
