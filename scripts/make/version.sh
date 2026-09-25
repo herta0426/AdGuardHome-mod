@@ -6,9 +6,9 @@
 # date of the latest commit, so the same commit always produces the same
 # version, and tags are expected to look like v2026-09-23 as well.
 #
-# A release candidate or a beta adds a suffix, for example v2026-09-23-rc.1 or
-# v2026-09-23-beta.  The CI workflow uses the suffix to publish those tags as
-# pre-releases.
+# A release candidate or a beta adds a suffix, for example v2026-09-23-rc.1,
+# v2026-09-23-beta, or v2026-09-23-beta-1.  The CI workflow uses the suffix to
+# publish those tags as pre-releases.
 #
 # The valid output format is "vYYYY-MM-DD" with an optional "-suffix".
 
@@ -21,7 +21,7 @@ fi
 
 set -e -f -u
 
-version_pattern='^v[0-9]{4}-[0-9]{2}-[0-9]{2}(-[0-9A-Za-z][0-9A-Za-z.]*)?$'
+version_pattern='^v[0-9]{4}-[0-9]{2}-[0-9]{2}(-[0-9A-Za-z][0-9A-Za-z.-]*)?$'
 readonly version_pattern
 
 # Prefer a date tag, if the current commit has one.
