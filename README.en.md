@@ -55,6 +55,7 @@ Removed features:
 
 - Safe search itself: the frontend code, the per-engine rule files, and the HTTP API.
 - Blocked services itself: the service list, the icon endpoint, and the related fields in the clients and statistics data.
+- DHCP itself: the DHCP server (v4/v6, the lease database, static leases, and the router advertisements), the nine `/control/dhcp/*` endpoints, the `dhcp` configuration section, the `dhcp_available` status field, and the DNS-side resolution of local hostnames and PTR records from DHCP leases.
 - Only English, Simplified Chinese, and Traditional Chinese remain as the UI languages.
 
 Linux only:

@@ -152,26 +152,6 @@ filters:
 whitelist_filters: []
 user_rules: []
 
-# DHCP 的 Web 界面已经删掉，后端与 /control/dhcp/* 接口保留（第三方管理器还要用），
-# 所以这一段照旧有效。
-dhcp:
-  enabled: false
-  interface_name: ""
-  local_domain_name: lan
-  dhcpv4:
-    gateway_ip: ""
-    subnet_mask: ""
-    range_start: ""
-    range_end: ""
-    lease_duration: 86400
-    icmp_timeout_msec: 1000
-    options: []
-  dhcpv6:
-    range_start: ""
-    lease_duration: 86400
-    ra_slaac_only: false
-    ra_allow_slaac: false
-
 filtering:
   blocking_ipv4: ""
   blocking_ipv6: ""
@@ -202,11 +182,11 @@ filtering:
 # 接口还保留着（第三方管理器要读）；官方版本写的 safe_search / blocked_services /
 # use_global_blocked_services 等键在这里没有意义，写上也会被忽略。
 clients:
+  # DHCP 服务器已整个移除，所以这里没有 runtime_sources.dhcp。
   runtime_sources:
     whois: true
     arp: true
     rdns: true
-    dhcp: true
     hosts: true
   persistent: []
 
