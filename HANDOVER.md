@@ -55,7 +55,7 @@ gh release delete v2026-09-24 --repo herta0426/AdguardHome-Mod --cleanup-tag --y
 ### 2.4 有意保留，不是漏删
 
 - 查询日志与统计里的 reason / result 编号保留为占位常量（`internal/filtering/reason.go`、`internal/stats/unit.go`），否则老日志、老统计文件升级后读不出来。
-- `internal/configmigrate/**` 里仍然到处是 `safe_search`、`blocked_services`、`use_global_blocked_services` 字样，那是给老 `AdGuardHome.yaml` 做迁移用的，删了会炸老配置。
+- `internal/configmigrate/**` 里的迁移函数**全部保留**（v1…v34 一版都不能少，否则老配置升不上来），但 v4、v18、v19、v21、v22、v26 已经不再往配置里写 `use_global_blocked_services`、`safe_search`、`safesearch_cache_size`、`blocked_services`，而是把这些键从老配置里删掉。所以现在 `rg` 只会在迁移的注释和老的 `input.yml` 测试数据里看到这些字样。
 - DHCP 选项卡的界面删了，但后端 `/control/dhcp/*` 接口和 `internal/dhcpd` 还在（第三方管理器要用），这是故意的。
 
 ### 2.5 一次真事：删接口会打断外部客户端
@@ -91,6 +91,7 @@ gh release delete v2026-09-24 --repo herta0426/AdguardHome-Mod --cleanup-tag --y
 | 后端全局路由 | `internal/home/control.go`；各子系统自己注册（`internal/dnsforward/http.go`、`internal/filtering/http.go`、`internal/home/clientshttp.go`、`internal/dhcpd/http_unix.go`、`internal/stats/http.go`、`internal/querylog/http.go`） |
 | 鉴权与权限分级 | `internal/home/middlewares.go` |
 | 配置结构 | `internal/home/config.go`；历史迁移在 `internal/configmigrate/**` |
+| 配置参考模板 | `doc/AdGuardHome.yaml.example`（只是参考，安装不需要；由程序自己生成） |
 | 统计接口与编号 | `internal/stats/http.go`、`internal/stats/unit.go` |
 | 过滤原因编号 | `internal/filtering/reason.go` |
 | 版本号生成 | `scripts/make/version.sh`、`Makefile` |
@@ -146,6 +147,29 @@ mkdir -p dist && make pack-release SIGN=0
 ```
 
 改了前端一定要先 `make js-build`，否则打进二进制里的还是旧的 `build/static`。
+
+### 重新生成配置模板
+
+`doc/AdGuardHome.yaml.example` 的内容必须来自真跑起来的程序，不能凭印象手写。拿一个 Linux 二进制（本机可以先在 Actions 里 `workflow_dispatch`，产物从 `AdGuardHome-linux` 下载）：
+
+```sh
+# 首次启动的权限检查要求 root，DNS 端口别用 53/5353（可能被占用）
+sudo ./AdGuardHome --no-check-update -w /tmp/agh-tpl --web-addr 127.0.0.1:3053 &
+curl -s -X POST http://127.0.0.1:3053/control/install/configure \
+  -H 'Content-Type: application/json' \
+  -d '{"language":"zh-cn","username":"admin","password":"templatepassword",
+       "web":{"ip":"127.0.0.1","port":3053},"dns":{"ip":"127.0.0.1","port":15353}}'
+cat /tmp/agh-tpl/AdGuardHome.yaml
+```
+
+把输出里的端口、`users`、`safe_fs_patterns` 换成模板该有的占位值（`127.0.0.1:3000`、`53`、`/data/adb/agh/bin/data/userfilters/*`），保留中文注释，然后校验：
+
+```sh
+mkdir -p /tmp/agh-check && cp doc/AdGuardHome.yaml.example /tmp/agh-check/AdGuardHome.yaml
+./AdGuardHome --check-config -w /tmp/agh-check   # 必须输出 "configuration file is ok"
+```
+
+注意：`--check-config -c <不在工作目录里的文件>` 会走「首次启动」分支并真的起一个服务，别那样用。
 
 ## 6. 手动跑起来验证
 

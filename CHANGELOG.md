@@ -4,6 +4,17 @@
 
 [upstream]: https://github.com/AdguardTeam/AdGuardHome/blob/master/CHANGELOG.md
 
+## 未发布
+
+### 新增
+
+- `doc/AdGuardHome.yaml.example`：按本 mod 删减后的结构生成的配置参考模板，逐段说明哪些功能保留、哪些属于已删除功能。它只是参考，安装并不需要。
+
+### 变更
+
+- 配置迁移不再写入已删除功能的键：`internal/configmigrate` 的 v4、v18、v19、v21、v22、v26 不再生成或搬运 `use_global_blocked_services`、`safe_search`、`safesearch_cache_size`、`blocked_services`，而是把它们从老配置里删掉。迁移链路本身不变，老配置照旧能升到 schema 34。
+- 同步更新迁移的测试数据与单测期望值，并修正 `internal/filtering/reason.go`、`internal/home/clients.go`、`internal/querylog/` 的 `gofmt` 对齐。
+
 ## v2026-09-24
 
 ### 移除

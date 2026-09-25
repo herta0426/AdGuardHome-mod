@@ -65,7 +65,7 @@ DNS 服务、过滤规则、查询日志、客户端管理、加密和 REST API 
 有意保留的部分，不是漏删：
 
 - 查询日志与统计数据里的 reason / result 编号保留为占位常量，老日志、老统计文件升级后仍能正常读取。
-- `internal/configmigrate` 的历史迁移里仍会出现 `safe_search` / `blocked_services` 字样，那是给老版 `AdGuardHome.yaml` 升级用的，删掉会导致老配置无法迁移。
+- `internal/configmigrate` 的历史迁移全部保留，老版 `AdGuardHome.yaml` 才能一版一版升上来；但迁移过程中不会再往配置里写入 `safe_search` / `blocked_services` 这类已删除功能的键，反而会把老配置里的它们删掉。
 
 本项目不只是做减法：后续会继续加入自己的功能与调整，改动都记录在 [CHANGELOG.md](CHANGELOG.md) 里。
 
@@ -88,6 +88,8 @@ sha256sum -c --ignore-missing checksums.txt
 ```
 
 替换原来的可执行文件后重启。面板「更新」处显示的版本号应当是 `v2026-09-24` 这样的日期；如果显示 `v0.107.x` 之类，说明装的还是官方原版。换过二进制之后，浏览器建议强刷一次，避免缓存到旧界面。
+
+`doc/AdGuardHome.yaml.example` 是一份参考模板，说明了经过本 Mod 删减之后的配置长什么样：官方版本写出的 `dns.safe_search`、`dns.safesearch_cache_size`、`dns.blocked_services`、`clients[].safe_search`、`clients[].blocked_services` 等键在这里都不存在。它**不是安装必需**的，程序第一次启动会自己生成同样的配置；只有手工改配置或清理老配置时才需要对照它。换配置前先备份。
 
 ## 从源码构建
 

@@ -189,6 +189,20 @@ jobs:
             pack-release \
             ;
 
+      # The template is what users compare their own configuration against, so
+      # make sure the binary still accepts it.
+      - name: Check the example configuration
+        run: |
+          #!/bin/sh
+
+          set -e -f -u
+
+          mkdir -p /tmp/agh-conf-check
+          cp ./doc/AdGuardHome.yaml.example /tmp/agh-conf-check/AdGuardHome.yaml
+
+          "./${DIST_DIR}/AdGuardHome_linux_amd64/AdGuardHome/AdGuardHome" \
+            --check-config -w /tmp/agh-conf-check
+
       - name: Upload the build artifacts
         uses: actions/upload-artifact@v4
         with:
