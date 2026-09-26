@@ -12,6 +12,7 @@
 - DNS 设置页的「拦截模式」重新出现两个选项：默认与强力模式（其它模式的后端实现仍在，界面不提供）。语言键 `strong` / `blocking_mode_strong` 见 `client/src/__locales/`。
 - **SNI 阻断**（`sni_filter` 配置段，默认关闭，仅 Linux）：在 `filter` 表的 `OUTPUT` 链上用 NFQUEUE 读取每条 TLS 连接开头的 ClientHello，取出明文 SNI，命中过滤规则就注入 TCP RST 断开连接。它补的是 DNS 过滤的洞——应用自己走 DoH（443 端口）或直连 IP 时，DNS 层看不到；这里复用同一套过滤规则，不需要另外维护清单。需要 root 与内核支持 `connbytes`、`NFQUEUE`，缺任何一个只会记日志，不影响 DNS。新代码在 `internal/snifilter/`，配置与机制见 `doc/AdGuardHome.yaml.example` 与 [HANDOVER.md](HANDOVER.md) 第 2.6 节。
 - **SNI 进查询日志**：每条解析出 SNI 的 TLS 连接都会写进查询日志，放行的也写——域名就是 SNI，能看到应用实际连了哪些域名。被拦的记录用新的拦截原因 `FilteredSNI`（查询日志里显示「已阻止（SNI 拦截）」，同时仍归入「已阻止」筛选），并带上命中的规则；放行的普通连接记为「已处理」，命中允许规则的记为「允许项」。主日志不再逐条打印 SNI，只在启动、停止与出错时写。
+- **把 netfilter 规则交给模块脚本**：AdGuardHome 不再安装、清理、自愈 iptables 规则，只负责开 NFQUEUE、读包、判决、发 RST；`filter` 表里的 `AGH_SNI` 链（`-o lo` 放行 + `--dports 443,8443 -m connbytes … -j NFQUEUE --queue-num N --queue-bypass`，v4/v6 各一份）改由 Magisk 模块的 `scripts/iptables.sh` 维护，队列号从 `sni_filter.queue_num` 读，脚本的 5 秒守护循环里用 `-C` 检查并重建。因此 `sni_filter` 的 `ports` / `uids` / `drop_quic` 现在只对那份脚本有意义；`--queue-bypass` 必须保留，否则 AdGuardHome 没跑时 443 会被队列卡住（实测：带 bypass 时延迟与无规则时无差别，漏掉则整段超时）。
 - `doc/AdGuardHome.yaml.example`：按本 mod 删减后的结构生成的配置参考模板，逐段说明哪些功能保留、哪些属于已删除功能。它只是参考，安装并不需要。
 - 依赖：新增 `github.com/florianl/go-nfqueue/v2`（纯 Go，不破坏 `CGO_ENABLED=0` 的交叉编译）。
 

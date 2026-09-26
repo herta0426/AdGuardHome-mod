@@ -199,8 +199,13 @@ filtering:
 # 缺任何一个只会在日志里报错，不会影响 DNS 服务本身。
 # 另外，把上面的 filtering.blocking_mode 设为 strong（强力模式）时，这一段会自动
 # 生效，不需要把 enabled 打开。
-# 直接改这一段的 enabled 需要重启 AdGuardHome 才生效；改成 strong 拦截模式不用重启，
-# 程序在切换时会自己启停这里的规则。
+# 直接改这一段的 enabled 需要重启 AdGuardHome 才生效；改成 strong 拦截模式不用重启。
+#
+# 把包送进队列的 netfilter 规则**不由 AdGuardHome 安装**：AdGuardHome 只开队列、读包、
+# 判决、发 RST，规则与它的守护循环由外部脚本维护——本 Mod 的 Magisk 模块就是
+# scripts/iptables.sh 里的 AGH_SNI 链（队列号从这里的 queue_num 读，必须带
+# --queue-bypass，否则 AdGuardHome 没跑时 443 会卡住）。因此下面的 ports / uids /
+# drop_quic 只对那份脚本有意义，AdGuardHome 不再使用它们。
 #
 # 每条连接的 SNI 都会写进查询日志（放行的也写）：被拦的显示成「已阻止（SNI 拦截）」，
 # 放行的按普通已处理/允许项记录。手机上流量大时查询日志会写得比较快，必要时调

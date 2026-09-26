@@ -83,7 +83,7 @@ gh release delete v2026-09-24 --repo herta0426/AdguardHome-Mod --cleanup-tag --y
 
 **机制。**
 
-1. 在 `filter` 表的 `OUTPUT` 链上挂自己的链 `AGH_SNI`：链首放行 loopback，然后 `-p tcp -m multiport --dports <ports> -m connbytes --connbytes 0:20000 --connbytes-dir original --connbytes-mode bytes -j NFQUEUE --queue-num <n> --queue-bypass`。`connbytes` 让每条连接只有开头 20 KB 进用户态，其余由内核直通；`--queue-bypass` 保证没人读队列时包照常走（AdGuardHome 挂了只是不拦广告，不会断网）。
+1. 管理员装的规则把包送进队列：`filter` 表的 `OUTPUT` 链上挂一条 `AGH_SNI` 链（链首放行 loopback），里面是 `-p tcp -m multiport --dports <ports> -m connbytes --connbytes 0:20000 --connbytes-dir original --connbytes-mode bytes -j NFQUEUE --queue-num <n> --queue-bypass`。**这些规则不由 AdGuardHome 安装**——AdGuardHome 只 `nfqueue.Open` 那个队列号、读包、判决，规则与它的守护循环由模块脚本负责（本 Mod 的 Magisk 模块是 `scripts/iptables.sh` 里的 `rebuild_sni`，队列号从 `AdGuardHome.yaml` 的 `sni_filter.queue_num` 读）。`connbytes` 让每条连接只有开头 20 KB 进用户态，其余由内核直通；`--queue-bypass` **不能少**：没人读队列时内核直接放行，AGH 挂了也只是不拦广告，不会断网（实测：带 bypass 时 443 正常、延迟无差别；不带则整段超时）。
 2. 用户态按连接拼 TCP 载荷，用 `internal/snifilter/clienthello.go` 解析出 SNI（处理跨 TLS record、跨 TCP 段）。
 3. 拿 SNI 问 AGH 自己的规则引擎：`filtering.DNSFilter.CheckHostRules(host, dns.TypeA, setts)`；命中就把这条连接记成「拦截」。
 4. 命中时返回 `NF_DROP`，同时用 `AF_INET/AF_INET6 + IPPROTO_RAW` 裸套接字注入两个 TCP RST：一个以「服务器」身份发给客户端（客户端立刻拿到 `ECONNRESET`，不是干等超时），一个以「客户端」身份发给服务器（顺手收掉服务端的半开连接）。之后这条连接的包继续 DROP。
@@ -107,7 +107,7 @@ gh release delete v2026-09-24 --repo herta0426/AdguardHome-Mod --cleanup-tag --y
 | --- | --- |
 | `internal/snifilter/snifilter.go` | 配置校验、连接表、判决（平台无关） |
 | `internal/snifilter/clienthello.go` | ClientHello / SNI 解析 |
-| `internal/snifilter/firewall_linux.go` | iptables/ip6tables 规则、NFQUEUE 消费、RST 注入、规则自愈 |
+| `internal/snifilter/firewall_linux.go` | NFQUEUE 消费、RST 注入、连接表清理、rp_filter 自检（**不碰 iptables**） |
 | `internal/snifilter/firewall_others.go` | 非 Linux 的平台桩 |
 | `internal/home/{config.go,dns.go,home.go}` | `sni_filter` 配置段与生命周期（`initDNS` 启动、`Apply` 同步、`stopDNSServer`/`closeDNSServer` 关闭） |
 | `internal/dnsforward/msg.go`、`internal/dnsforward/dnsforward.go` | 强力模式的 NODATA 响应与模式校验 |
@@ -128,7 +128,7 @@ sni_filter:
 
 **验证怎么做。** 规则里排除了 loopback，所以本机 127.0.0.1 上的测试服务器测不到，必须让流量真的过一张网卡。Linux 上的做法是 network namespace + veth，把 TLS 服务器放进去，客户端从宿主机连 `10.99.0.2:443`：规则里放 `||blocked.test^` 时，`sni=blocked.test` 应立刻收到 RST，`sni=allowed.test` 应正常握手。
 
-2026-09-26 已在 WSL2（内核 6.18，iptables-nft）上跑过：IPv4/IPv6 都被 RST（11 ms / 1.7 ms），放行的连接正常（6 ms），手工 `iptables -D OUTPUT -j AGH_SNI` 后 30 秒内规则自动恢复，SIGTERM 后 v4/v6 的链与跳转都清干净；`drop_quic: true` 时 v4/v6 分别生成 `icmp-port-unreachable` 与 `icmp6-port-unreachable` 的 REJECT 规则。
+2026-09-26 已在 WSL2（内核 6.18，iptables-nft）上跑过：IPv4/IPv6 都被 RST（11 ms / 1.7 ms），放行的连接正常（6 ms）；查询日志里同时能看到放行与拦截两种记录。规则搬到 `iptables.sh` 之后又验了一遍：AdGuardHome 自己不再装/删规则，脚本那 6 条 `-C` 守卫检查全部通过，被拦域名 1.2 ms 收到 RST、放行的正常，AGH 退出后规则仍在（由脚本负责清理）。
 
 **已知限制与坑。**
 
@@ -139,7 +139,8 @@ sni_filter:
 - **SNI 走查询日志，不走主日志**：每条解析出 SNI 的连接都会写进查询日志（`internal/snifilter/snifilter.go` 的 `logConnection`），域名就是 SNI。被拦的用新加的 `filtering.FilteredSNI`（界面显示「已阻止（SNI 拦截）」，仍归入「已阻止」筛选），放行的保留过滤引擎给的原因：普通放行是 `NotFilteredNotFound`（已处理），命中允许规则是 `NotFilteredAllowList`（允许项），并带上命中的规则。主日志只在启动/停止、出错误的时候写，不再逐条打印连接；RST 发不出去也只记 debug。
 - 查询日志里记的是**每条连接**（放行的也记），手机上流量大时会把查询日志刷得比较快，`querylog` 的 `size_memory` / `interval` 按实际用量调。
 - 队列号默认 7，和别的 NFQUEUE 使用者撞车时改 `queue_num`。
-- **`Filter.Start` 必须把传入的 ctx 用 `context.WithoutCancel` 脱钩**：运行时切换拦截模式时，启动请求来自 `/control/dns_config` 的 HTTP 请求，响应一写完请求 ctx 就被取消，NFQUEUE 的读取循环和规则自愈的 ticker 会一起停掉——现象是「规则装了、计数器在涨，但用户态一个包都收不到，`--queue-bypass` 把包全放了」。这个坑只会在运行时启动时出现，启动时用后台 ctx 是看不出来的。
+- **`Filter.Start` 必须把传入的 ctx 用 `context.WithoutCancel` 脱钩**：运行时切换拦截模式时，启动请求来自 `/control/dns_config` 的 HTTP 请求，响应一写完请求 ctx 就被取消，NFQUEUE 的读取循环和连接表清理的 ticker 会一起停掉——现象是「规则装了、计数器在涨，但用户态一个包都收不到，`--queue-bypass` 把包全放了」。这个坑只会在运行时启动时出现，启动时用后台 ctx 是看不出来的。
+- **规则是外部的，所以「功能没效果」先查脚本**：AdGuardHome 只读队列，链不在、`--queue-bypass` 漏了、队列号与 `sni_filter.queue_num` 不一致，都会表现成「配置开了但什么都没发生」。脚本侧那 6 条 `-C` 守卫检查就是防这个的。
 
 ## 3. 目录地图：想改什么去哪里
 
