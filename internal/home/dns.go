@@ -199,9 +199,10 @@ func startSNIFilterLocked(
 	dnsFilter *filtering.DNSFilter,
 ) (err error) {
 	sni, err := snifilter.New(&snifilter.Config{
-		Logger: l.With(slogutil.KeyPrefix, "snifilter"),
-		Filter: dnsFilter,
-		Params: config.SNIFilter,
+		Logger:   l.With(slogutil.KeyPrefix, "snifilter"),
+		Filter:   dnsFilter,
+		QueryLog: globalContext.queryLog,
+		Params:   config.SNIFilter,
 	})
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.

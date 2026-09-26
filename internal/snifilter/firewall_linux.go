@@ -435,7 +435,7 @@ func (f *Filter) handlePacket(a nfqueue.Attribute) (ret int) {
 		case verdictDrop:
 			verdict = nfqueue.NfDrop
 		case verdictReset:
-			f.reset(&res)
+			f.resetConnection(&res)
 
 			verdict = nfqueue.NfDrop
 		default:
@@ -496,30 +496,15 @@ func (f *Filter) closeRawSockets() {
 	}
 }
 
-// reset injects the reset segments of the blocked connection into the network
-// stack and logs the result.
-func (f *Filter) reset(res *inspection) {
+// resetConnection injects the reset segments of the blocked connection into
+// the network stack.  The errors are only logged, since the packet processing
+// must not be interrupted by them.  The blocked connection itself is recorded
+// in the query log, see [Filter.logConnection].
+func (f *Filter) resetConnection(res *inspection) {
 	err := errors.Join(f.sendReset(&res.toClient), f.sendReset(&res.toServer))
 	if err != nil {
-		f.logger.Warn(
-			"blocked tls connection by sni, but its reset wasn't sent",
-			"host", res.host,
-			"client", res.toClient.dst.String(),
-			"server", res.toClient.src.String(),
-			"rules", res.rules,
-			slogutil.KeyError, err,
-		)
-
-		return
+		f.logger.Debug("sending the reset segments", slogutil.KeyError, err)
 	}
-
-	f.logger.Info(
-		"blocked tls connection by sni, sent the reset",
-		"host", res.host,
-		"client", res.toClient.dst.String(),
-		"server", res.toClient.src.String(),
-		"rules", res.rules,
-	)
 }
 
 // sendReset injects the reset segment into the network stack.

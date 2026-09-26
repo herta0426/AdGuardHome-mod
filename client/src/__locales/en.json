@@ -23,6 +23,7 @@
   "blocked_adult_websites": "Blocked by Parental Control",
   "blocked_by": "<0>Blocked by Filters</0>",
   "blocked_by_cname_or_ip": "Blocked by CNAME or IP",
+  "blocked_by_sni": "Blocked (SNI)",
   "blocked_response_ttl": "Blocked response TTL",
   "blocked_response_ttl_desc": "Specifies for how many seconds the clients should cache a filtered response",
   "blocked_threats": "Blocked Threats",

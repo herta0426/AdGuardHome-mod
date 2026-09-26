@@ -23,6 +23,7 @@
   "blocked_adult_websites": "被家長控制封鎖",
   "blocked_by": "<0>被過濾器封鎖</0>",
   "blocked_by_cname_or_ip": "被正規名稱（CNAME）或 IP 封鎖",
+  "blocked_by_sni": "已封鎖（SNI 攔截）",
   "blocked_response_ttl": "已封鎖的回應之存活時間（TTL）",
   "blocked_response_ttl_desc": "對用戶端應快取受過濾的回應，指定多少秒數",
   "blocked_threats": "已封鎖的威脅",

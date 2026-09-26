@@ -53,6 +53,15 @@ const (
 	//
 	// See https://github.com/AdguardTeam/AdGuardHome/issues/2499.
 	RewrittenRule
+
+	// FilteredSNI is returned when a TLS connection was blocked by its SNI
+	// value by the SNI filtering of the TLS connections.  It's a mod-only
+	// reason.
+	//
+	// It's appended to the end of the list instead of being put next to the
+	// other filtered reasons to keep the numbers of the existing ones stable,
+	// since they are stored in the query log and statistics files.
+	FilteredSNI
 )
 
 // reasonNames maps reason values to their string representations.
@@ -72,6 +81,8 @@ var reasonNames = []string{
 	Rewritten:          "Rewrite",
 	RewrittenAutoHosts: "RewriteEtcHosts",
 	RewrittenRule:      "RewriteRule",
+
+	FilteredSNI: "FilteredSNI",
 }
 
 // ReasonByName maps reason string names to their values.

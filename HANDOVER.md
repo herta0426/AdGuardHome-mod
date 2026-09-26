@@ -136,7 +136,8 @@ sni_filter:
 - 注入的 RST 源地址是远端 IP，靠本机 IP 栈绕回本地 socket；`net.ipv4.conf.*.rp_filter` 若是**严格模式（1）**，这个包会被丢掉，效果退化成「连接一直挂着」（仍然拦截，只是慢）。部分 ROM 要留意。
 - HTTP/3（QUIC）的 SNI 是加密的，拦不到，只能 `drop_quic: true` 逼回退 TCP。ECH 普及后这条路也会静默失效。
 - 只看进程 UID、不看客户端 IP：手机上的应用都在同一台机器上，所以**按客户端区分的过滤规则在 SNI 层不生效**，只按全局规则判定（`setts.ProtectionEnabled` 恒为真）。
-- 每条检查过的 TLS 连接在**主日志**留一行 debug 级的 `snifilter: inspected tls connection host=… blocked=… rules=[…]`；真正发出 RST 时再加一行 **info** 级的 `snifilter: blocked tls connection by sni, sent the reset …`（发不出去则是同义的 warn）。都不进查询日志、不进统计；要做成界面上的记录得另外接查询日志。
+- **SNI 走查询日志，不走主日志**：每条解析出 SNI 的连接都会写进查询日志（`internal/snifilter/snifilter.go` 的 `logConnection`），域名就是 SNI。被拦的用新加的 `filtering.FilteredSNI`（界面显示「已阻止（SNI 拦截）」，仍归入「已阻止」筛选），放行的保留过滤引擎给的原因：普通放行是 `NotFilteredNotFound`（已处理），命中允许规则是 `NotFilteredAllowList`（允许项），并带上命中的规则。主日志只在启动/停止、出错误的时候写，不再逐条打印连接；RST 发不出去也只记 debug。
+- 查询日志里记的是**每条连接**（放行的也记），手机上流量大时会把查询日志刷得比较快，`querylog` 的 `size_memory` / `interval` 按实际用量调。
 - 队列号默认 7，和别的 NFQUEUE 使用者撞车时改 `queue_num`。
 - **`Filter.Start` 必须把传入的 ctx 用 `context.WithoutCancel` 脱钩**：运行时切换拦截模式时，启动请求来自 `/control/dns_config` 的 HTTP 请求，响应一写完请求 ctx 就被取消，NFQUEUE 的读取循环和规则自愈的 ticker 会一起停掉——现象是「规则装了、计数器在涨，但用户态一个包都收不到，`--queue-bypass` 把包全放了」。这个坑只会在运行时启动时出现，启动时用后台 ctx 是看不出来的。
 

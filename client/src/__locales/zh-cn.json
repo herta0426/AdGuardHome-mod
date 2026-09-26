@@ -23,6 +23,7 @@
   "blocked_adult_websites": "被家长控制阻止",
   "blocked_by": "<0>已被过滤器拦截</0>",
   "blocked_by_cname_or_ip": "按 CNAME 或 IP 拦截",
+  "blocked_by_sni": "已阻止（SNI 拦截）",
   "blocked_response_ttl": "屏蔽的 TTL 应答",
   "blocked_response_ttl_desc": "指定客户端应缓存已过滤响应的秒数",
   "blocked_threats": "拦截的威胁",

@@ -1,17 +1,115 @@
 package snifilter
 
 import (
+	"context"
 	"encoding/binary"
 	"net/netip"
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 // testTimeout is the timeout for the tests that use the network.
 const testTimeout = 5 * time.Second
+
+// testQueryLog is a [querylog.QueryLog] implementation that keeps the last
+// added entry.
+type testQueryLog struct {
+	added *querylog.AddParams
+}
+
+// type check
+var _ querylog.QueryLog = (*testQueryLog)(nil)
+
+// Start implements the [querylog.QueryLog] interface for *testQueryLog.
+func (l *testQueryLog) Start(_ context.Context) (err error) { return nil }
+
+// Shutdown implements the [querylog.QueryLog] interface for *testQueryLog.
+func (l *testQueryLog) Shutdown(_ context.Context) (err error) { return nil }
+
+// Add implements the [querylog.QueryLog] interface for *testQueryLog.
+func (l *testQueryLog) Add(p *querylog.AddParams) { l.added = p }
+
+// WriteDiskConfig implements the [querylog.QueryLog] interface for
+// *testQueryLog.
+func (l *testQueryLog) WriteDiskConfig(_ *querylog.Config) {}
+
+// ShouldLog implements the [querylog.QueryLog] interface for *testQueryLog.
+func (l *testQueryLog) ShouldLog(_ string, _, _ uint16, _ []string) (ok bool) {
+	return true
+}
+
+// TestFilter_logConnection tests that the inspected connections are recorded
+// in the query log.
+func TestFilter_logConnection(t *testing.T) {
+	t.Parallel()
+
+	filter, err := filtering.New(&filtering.Config{
+		Logger:            slogutil.NewDiscardLogger(),
+		ProtectionEnabled: true,
+	}, []filtering.Filter{{
+		ID:   1,
+		Data: []byte("||blocked.test^\n@@||allowed.test^"),
+	}})
+	require.NoError(t, err)
+
+	filter.SetEnabled(true)
+
+	ql := &testQueryLog{}
+	f := &Filter{
+		logger:   slogutil.NewDiscardLogger(),
+		filter:   filter,
+		queryLog: ql,
+		flows:    map[flowKey]*flow{},
+	}
+
+	p := &packet{src: netip.MustParseAddrPort("127.0.0.1:12345")}
+
+	t.Run("blocked", func(t *testing.T) {
+		res := f.checkHost("blocked.test")
+		require.True(t, res.IsFiltered)
+
+		f.logConnection(p, "blocked.test", res)
+		require.NotNil(t, ql.added)
+
+		assert.Equal(t, "blocked.test.", ql.added.Question.Question[0].Name)
+		assert.Equal(t, filtering.FilteredSNI, ql.added.Result.Reason)
+		assert.True(t, ql.added.Result.IsFiltered)
+		require.Len(t, ql.added.Result.Rules, 1)
+		assert.Equal(t, "||blocked.test^", ql.added.Result.Rules[0].Text)
+		assert.Equal(t, []byte{127, 0, 0, 1}, []byte(ql.added.ClientIP))
+	})
+
+	t.Run("allowed", func(t *testing.T) {
+		res := f.checkHost("example.org")
+		require.False(t, res.IsFiltered)
+
+		f.logConnection(p, "example.org", res)
+		require.NotNil(t, ql.added)
+
+		assert.Equal(t, "example.org.", ql.added.Question.Question[0].Name)
+		assert.Equal(t, filtering.NotFilteredNotFound, ql.added.Result.Reason)
+		assert.False(t, ql.added.Result.IsFiltered)
+		assert.Empty(t, ql.added.Result.Rules)
+	})
+
+	t.Run("allowed_by_rule", func(t *testing.T) {
+		res := f.checkHost("allowed.test")
+		require.False(t, res.IsFiltered)
+		require.Equal(t, filtering.NotFilteredAllowList, res.Reason)
+
+		f.logConnection(p, "allowed.test", res)
+		require.NotNil(t, ql.added)
+
+		assert.Equal(t, filtering.NotFilteredAllowList, ql.added.Result.Reason)
+		require.Len(t, ql.added.Result.Rules, 1)
+	})
+}
 
 func TestParams_Validate(t *testing.T) {
 	t.Parallel()
