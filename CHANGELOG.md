@@ -8,7 +8,11 @@
 
 ### 新增
 
+- **强力模式**（`filtering.blocking_mode: strong`）：被拦截的域名回**空解析（NODATA）**，同时对命中规则的 TLS 连接注入 RST。也就是把上面那条 SNI 阻断与 DNS 拦截合成一个开关：应用自己走 DoH（443 端口）或直连 IP 时本来绕过 DNS 过滤，现在也会被 RST 断掉。选这个模式会自动打开 SNI 过滤，不需要另外配 `sni_filter.enabled`；在界面里切换时，DNS 那一半立刻生效，RST 那一半会在配置保存时同步启停，不用重启。实现见 `internal/dnsforward/msg.go` 的 `BlockingModeStrong` 分支与 `internal/home/dns.go` 的 `syncSNIFilter`。
+- DNS 设置页的「拦截模式」重新出现两个选项：默认与强力模式（其它模式的后端实现仍在，界面不提供）。语言键 `strong` / `blocking_mode_strong` 见 `client/src/__locales/`。
+- **SNI 阻断**（`sni_filter` 配置段，默认关闭，仅 Linux）：在 `filter` 表的 `OUTPUT` 链上用 NFQUEUE 读取每条 TLS 连接开头的 ClientHello，取出明文 SNI，命中过滤规则就注入 TCP RST 断开连接。它补的是 DNS 过滤的洞——应用自己走 DoH（443 端口）或直连 IP 时，DNS 层看不到；这里复用同一套过滤规则，不需要另外维护清单。需要 root 与内核支持 `connbytes`、`NFQUEUE`，缺任何一个只会记日志，不影响 DNS。新代码在 `internal/snifilter/`，配置与机制见 `doc/AdGuardHome.yaml.example` 与 [HANDOVER.md](HANDOVER.md) 第 2.6 节。
 - `doc/AdGuardHome.yaml.example`：按本 mod 删减后的结构生成的配置参考模板，逐段说明哪些功能保留、哪些属于已删除功能。它只是参考，安装并不需要。
+- 依赖：新增 `github.com/florianl/go-nfqueue/v2`（纯 Go，不破坏 `CGO_ENABLED=0` 的交叉编译）。
 
 ### 变更
 
