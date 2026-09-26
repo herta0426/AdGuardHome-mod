@@ -9,7 +9,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"strconv"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agh"
@@ -29,7 +28,6 @@ import (
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/netutil/httputil"
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
-	"github.com/google/renameio/v2/maybe"
 	yaml "go.yaml.in/yaml/v4"
 )
 
@@ -218,34 +216,7 @@ func startSNIFilterLocked(
 
 	globalContext.sniFilter = sni
 
-	writeSNIQueueNum(ctx, l)
-
 	return nil
-}
-
-// sniQueueFileName is the name of the file in the data directory that keeps
-// the number of the queue the SNI filter listens to.  The script that installs
-// the netfilter rules reads it, so that it doesn't have to parse the
-// configuration file, and the queue number cannot be written down differently
-// in two places.
-const sniQueueFileName = "sni_queue"
-
-// writeSNIQueueNum writes the number of the SNI queue into the data directory.
-// l must not be nil.
-func writeSNIQueueNum(ctx context.Context, l *slog.Logger) {
-	conf := config.Filtering
-	if conf == nil || conf.DataDir == "" {
-		return
-	}
-
-	// Don't wrap the error, because it's informative enough as is.
-	data := []byte(strconv.FormatUint(uint64(config.SNIFilter.QueueNum), 10) + "\n")
-	path := filepath.Join(conf.DataDir, sniQueueFileName)
-
-	err := maybe.WriteFile(path, data, 0o644)
-	if err != nil {
-		l.ErrorContext(ctx, "writing the sni queue number", "path", path, slogutil.KeyError, err)
-	}
 }
 
 // closeSNIFilter stops the SNI filtering module, if it's running.  l must not

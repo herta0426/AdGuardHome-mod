@@ -203,10 +203,11 @@ filtering:
 #
 # 把包送进队列的 netfilter 规则**不由 AdGuardHome 安装**：AdGuardHome 只开队列、读包、
 # 判决、发 RST，规则与它的守护循环由外部脚本维护——本 Mod 的 Magisk 模块就是
-# scripts/iptables.sh 里的 AGH_SNI 链。生效的队列号由 AdGuardHome 写在数据目录的
-# `data/sni_queue` 里（纯数字），脚本直接读它，所以两边不会各写一份；规则里必须带
-# --queue-bypass，否则 AdGuardHome 没跑时 443 会卡住。因此下面的 ports / uids /
-# drop_quic 只对那份脚本有意义，AdGuardHome 不再使用它们。
+# scripts/iptables.sh 里的 AGH_SNI 链，规则用的队列号与端口来自模块自己的
+# scripts/config.prop（sni_queue / sni_ports），脚本里不写死；其中 sni_queue 必须与
+# 这里的 queue_num 一致（默认都是 7），否则包会进没人读的队列、功能静默失效。
+# 规则里必须带 --queue-bypass，否则 AdGuardHome 没跑时 443 会卡住。因此下面的
+# ports / uids / drop_quic 只对那份脚本有意义，AdGuardHome 不再使用它们。
 #
 # 每条连接的 SNI 都会写进查询日志（放行的也写）：被拦的显示成「已阻止（SNI 拦截）」，
 # 放行的按普通已处理/允许项记录。手机上流量大时查询日志会写得比较快，必要时调
