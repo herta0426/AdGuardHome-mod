@@ -84,7 +84,7 @@ gh release delete v2026-09-24 --repo herta0426/AdguardHome-Mod --cleanup-tag --y
 **机制。**
 
 1. 在 `filter` 表的 `OUTPUT` 链上挂自己的链 `AGH_SNI`：链首放行 loopback，然后 `-p tcp -m multiport --dports <ports> -m connbytes --connbytes 0:20000 --connbytes-dir original --connbytes-mode bytes -j NFQUEUE --queue-num <n> --queue-bypass`。`connbytes` 让每条连接只有开头 20 KB 进用户态，其余由内核直通；`--queue-bypass` 保证没人读队列时包照常走（AdGuardHome 挂了只是不拦广告，不会断网）。
-2. 用户态按连接拼 TCP 载荷，用 `internal/snifilter/clienthello.go` 解析出 SNI（处理跨 TLS record、跨 TCP 段）。
+2. 用户态按连接拼 TCP 载荷，用 `internal/snifilter/clienthello.go` 解析出 SNI（处理跨 TLS record、跨 TCP 段），再把 SNI 和判决结果写进查询日志，见下面「SNI 走查询日志」一条。
 3. 拿 SNI 问 AGH 自己的规则引擎：`filtering.DNSFilter.CheckHostRules(host, dns.TypeA, setts)`；命中就把这条连接记成「拦截」。
 4. 命中时返回 `NF_DROP`，同时用 `AF_INET/AF_INET6 + IPPROTO_RAW` 裸套接字注入两个 TCP RST：一个以「服务器」身份发给客户端（客户端立刻拿到 `ECONNRESET`，不是干等超时），一个以「客户端」身份发给服务器（顺手收掉服务端的半开连接）。之后这条连接的包继续 DROP。
 
@@ -122,9 +122,14 @@ sni_filter:
   ports: [443, 8443]
   uids: []              # 例如 ["10000-19999"]，空表示所有进程
   drop_quic: false      # 打开则 REJECT UDP 443，逼 HTTP/3 回退 TCP
+  manage_rules: true    # false = 规则交给外部脚本装（见下）
 ```
 
 `filtering.blocking_mode: strong` 时上面这一段自动生效，不需要把 `enabled` 打开。
+
+**规则可以搬给外部脚本**（`manage_rules: false`）：AdGuardHome 只开 NFQUEUE、读包、发 RST，不再安装/清理/自愈 iptables 规则。Magisk 模块走的就是这条：`scripts/iptables.sh` 维护 `filter` 表里的 `AGH_SNI` 链（`-o lo -j RETURN` + `-p tcp --dports … -m owner --uid-owner … -m connbytes … -j NFQUEUE --queue-num N --queue-bypass`，v4/v6 各一份），5 秒守护循环里用 `-C` 检查、缺了就重建；队列号从 `AdGuardHome.yaml` 的 `sni_filter.queue_num` 读，避免两边写死不同值。这种模式下 `ports`/`uids`/`drop_quic` 由脚本说了算，配置里那三项不生效。
+
+外部规则的硬要求：**必须带 `--queue-bypass`**，否则 AdGuardHome 没在跑时进队列的包没人判决，443 会整段卡住；链名建议沿用 `AGH_SNI`（AGH 侧的启动日志和文档都用这个名字）。
 
 **验证怎么做。** 规则里排除了 loopback，所以本机 127.0.0.1 上的测试服务器测不到，必须让流量真的过一张网卡。Linux 上的做法是 network namespace + veth，把 TLS 服务器放进去，客户端从宿主机连 `10.99.0.2:443`：规则里放 `||blocked.test^` 时，`sni=blocked.test` 应立刻收到 RST，`sni=allowed.test` 应正常握手。
 
@@ -136,7 +141,8 @@ sni_filter:
 - 注入的 RST 源地址是远端 IP，靠本机 IP 栈绕回本地 socket；`net.ipv4.conf.*.rp_filter` 若是**严格模式（1）**，这个包会被丢掉，效果退化成「连接一直挂着」（仍然拦截，只是慢）。部分 ROM 要留意。
 - HTTP/3（QUIC）的 SNI 是加密的，拦不到，只能 `drop_quic: true` 逼回退 TCP。ECH 普及后这条路也会静默失效。
 - 只看进程 UID、不看客户端 IP：手机上的应用都在同一台机器上，所以**按客户端区分的过滤规则在 SNI 层不生效**，只按全局规则判定（`setts.ProtectionEnabled` 恒为真）。
-- 每条检查过的 TLS 连接在**主日志**留一行 debug 级的 `snifilter: inspected tls connection host=… blocked=… rules=[…]`；真正发出 RST 时再加一行 **info** 级的 `snifilter: blocked tls connection by sni, sent the reset …`（发不出去则是同义的 warn）。都不进查询日志、不进统计；要做成界面上的记录得另外接查询日志。
+- **SNI 走查询日志，不走主日志**：每条解析出 SNI 的连接都会写进查询日志（`internal/snifilter/snifilter.go` 的 `logConnection`），域名就是 SNI。原因换成 SNI 专用的两个值，好把 TLS 连接与 DNS 请求分开：被拦的是 `filtering.FilteredSNI`（界面显示「已阻止（SNI）」，仍归入「已阻止」筛选），放行的是 `filtering.NotFilteredSNI`（显示「已处理（SNI）」）——过滤引擎给的原因不再写进查询日志，但命中的规则照旧带上，所以「命中允许规则」的连接改看规则列而不是「允许项」筛选。主日志只在启动/停止、出错误的时候写，不再逐条打印连接；RST 发不出去也只记 debug。
+- 查询日志里记的是**每条连接**（放行的也记），手机上流量大时会把查询日志刷得比较快，日志轮转要不要调（`querylog.mem_size` / `interval`）按实际用量定。
 - 队列号默认 7，和别的 NFQUEUE 使用者撞车时改 `queue_num`。
 - **`Filter.Start` 必须把传入的 ctx 用 `context.WithoutCancel` 脱钩**：运行时切换拦截模式时，启动请求来自 `/control/dns_config` 的 HTTP 请求，响应一写完请求 ctx 就被取消，NFQUEUE 的读取循环和规则自愈的 ticker 会一起停掉——现象是「规则装了、计数器在涨，但用户态一个包都收不到，`--queue-bypass` 把包全放了」。这个坑只会在运行时启动时出现，启动时用后台 ctx 是看不出来的。
 

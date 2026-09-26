@@ -14,7 +14,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/florianl/go-nfqueue/v2"
 	"golang.org/x/sys/unix"
@@ -98,6 +97,20 @@ func (f *Filter) startFirewall(ctx context.Context) (err error) {
 		return fmt.Errorf("opening the queue: %w", err)
 	}
 
+	if !f.manageRules {
+		// The rules are installed and removed by the operator, for example by
+		// the script of a Magisk module.
+		f.logger.InfoContext(
+			ctx,
+			"netfilter rules aren't managed by adguard home; make sure "+
+				"they send the packets to the queue",
+			"chain", chainName,
+			"queue_num", f.queueNum,
+		)
+
+		return nil
+	}
+
 	err = f.setupRules(ctx)
 	if err != nil {
 		f.closeQueue()
@@ -120,7 +133,10 @@ func (f *Filter) stopFirewall(ctx context.Context) {
 	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), shutdownTimeout)
 	defer cancel()
 
-	f.removeRules(ctx)
+	if f.manageRules {
+		f.removeRules(ctx)
+	}
+
 	f.closeQueue()
 	f.closeRawSockets()
 }
@@ -435,7 +451,8 @@ func (f *Filter) handlePacket(a nfqueue.Attribute) (ret int) {
 		case verdictDrop:
 			verdict = nfqueue.NfDrop
 		case verdictReset:
-			f.reset(&res)
+			f.sendReset(&res.toClient)
+			f.sendReset(&res.toServer)
 
 			verdict = nfqueue.NfDrop
 		default:
@@ -496,58 +513,44 @@ func (f *Filter) closeRawSockets() {
 	}
 }
 
-// reset injects the reset segments of the blocked connection into the network
-// stack and logs the result.
-func (f *Filter) reset(res *inspection) {
-	err := errors.Join(f.sendReset(&res.toClient), f.sendReset(&res.toServer))
-	if err != nil {
-		f.logger.Warn(
-			"blocked tls connection by sni, but its reset wasn't sent",
-			"host", res.host,
-			"client", res.toClient.dst.String(),
-			"server", res.toClient.src.String(),
-			"rules", res.rules,
-			slogutil.KeyError, err,
-		)
-
-		return
-	}
-
-	f.logger.Info(
-		"blocked tls connection by sni, sent the reset",
-		"host", res.host,
-		"client", res.toClient.dst.String(),
-		"server", res.toClient.src.String(),
-		"rules", res.rules,
-	)
-}
-
-// sendReset injects the reset segment into the network stack.
-func (f *Filter) sendReset(seg *rstSegment) (err error) {
+// sendReset injects the reset segment into the network stack.  The errors are
+// only logged, since the packet processing must not be interrupted by them.
+func (f *Filter) sendReset(seg *rstSegment) {
 	addr := seg.dst.Addr()
 
 	// A zoned address requires the interface to be resolved, which the raw
 	// sockets don't do.
 	if addr.Zone() != "" {
-		return fmt.Errorf("zoned address %s", seg.dst)
+		f.logger.Debug("not sending a reset to a zoned address", "dst", seg.dst.String())
+
+		return
 	}
 
+	var err error
 	switch {
 	case addr.Is4():
 		if f.raw4 < 0 {
-			return errors.Error("no ipv4 raw socket")
+			f.logger.Debug("not sending a reset: no ipv4 raw socket")
+
+			return
 		}
 
-		return unix.Sendto(f.raw4, buildReset4(seg), 0, &unix.SockaddrInet4{Addr: addr.As4()})
+		err = unix.Sendto(f.raw4, buildReset4(seg), 0, &unix.SockaddrInet4{Addr: addr.As4()})
 	case addr.Is6():
 		if f.raw6 < 0 {
-			return errors.Error("no ipv6 raw socket")
+			f.logger.Debug("not sending a reset: no ipv6 raw socket")
+
+			return
 		}
 
-		return unix.Sendto(f.raw6, buildReset6(seg), 0, &unix.SockaddrInet6{Addr: addr.As16()})
+		err = unix.Sendto(f.raw6, buildReset6(seg), 0, &unix.SockaddrInet6{Addr: addr.As16()})
 	default:
 		// Can't happen, since an address is either IPv4 or IPv6.
-		return errors.Error("unsupported address family")
+		return
+	}
+
+	if err != nil {
+		f.logger.Debug("sending the reset segment", "dst", seg.dst.String(), slogutil.KeyError, err)
 	}
 }
 

@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
+	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/miekg/dns"
@@ -90,11 +91,24 @@ type Params struct {
 	// make the clients fall back to TCP.  The server names in QUIC are
 	// encrypted, so the SNI filter cannot inspect it.
 	DropQUIC bool `yaml:"drop_quic"`
+
+	// ManageRules defines whether AdGuard Home installs and removes the
+	// netfilter rules itself.  When it's false, only the queue is opened, and
+	// the rules are expected to be installed by the operator, for example by
+	// a Magisk module script.  In that case Ports, UIDs, and DropQUIC are
+	// unused.
+	ManageRules bool `yaml:"manage_rules"`
 }
 
 // Validate returns an error if p isn't valid.
 func (p *Params) Validate() (err error) {
 	if !p.Enabled {
+		return nil
+	}
+
+	if !p.ManageRules {
+		// The ports, the UIDs, and the QUIC setting are only used to build
+		// the rules, which are managed externally in this case.
 		return nil
 	}
 
@@ -165,6 +179,10 @@ type Config struct {
 	// must not be nil.
 	Filter *filtering.DNSFilter
 
+	// QueryLog, if not nil, is used to record the blocked connections, so
+	// that they can be analyzed in the admin UI.
+	QueryLog querylog.QueryLog
+
 	// Params are the settings read from the configuration file.
 	Params
 }
@@ -179,10 +197,18 @@ type Filter struct {
 	// by mu.
 	flows map[flowKey]*flow
 
+	// queryLog is used to record the blocked connections.  It's nil if the
+	// query log is not available.
+	queryLog querylog.QueryLog
+
 	ports    []uint16
 	uids     []string
 	queueNum uint16
 	dropQUIC bool
+
+	// manageRules is true if the filter installs and removes its netfilter
+	// rules itself.
+	manageRules bool
 
 	cancel context.CancelFunc
 	wg     sync.WaitGroup
@@ -222,13 +248,15 @@ func New(c *Config) (f *Filter, err error) {
 	}
 
 	f = &Filter{
-		logger:   c.Logger,
-		filter:   c.Filter,
-		flows:    map[flowKey]*flow{},
-		ports:    slices.Clone(c.Ports),
-		uids:     slices.Clone(c.UIDs),
-		queueNum: c.QueueNum,
-		dropQUIC: c.DropQUIC,
+		logger:      c.Logger,
+		filter:      c.Filter,
+		flows:       map[flowKey]*flow{},
+		queryLog:    c.QueryLog,
+		ports:       slices.Clone(c.Ports),
+		uids:        slices.Clone(c.UIDs),
+		queueNum:    c.QueueNum,
+		dropQUIC:    c.DropQUIC,
+		manageRules: c.ManageRules,
 	}
 
 	return f, nil
@@ -258,6 +286,7 @@ func (f *Filter) Start(ctx context.Context) (err error) {
 		"queue_num", f.queueNum,
 		"uid_ranges", f.uids,
 		"drop_quic", f.dropQUIC,
+		"manage_rules", f.manageRules,
 	)
 
 	return nil
@@ -331,14 +360,6 @@ type inspection struct {
 	// meaningful when verdict is [verdictReset].
 	toServer rstSegment
 
-	// host is the server name of the blocked connection.  It's only
-	// meaningful when verdict is [verdictReset].
-	host string
-
-	// rules are the filtering rules that blocked the connection.  It's only
-	// meaningful when verdict is [verdictReset].
-	rules []string
-
 	// verdict is the action to take for the packet.
 	verdict verdict
 }
@@ -385,29 +406,29 @@ func (f *Filter) inspect(p *packet) (res inspection) {
 	name, err := sniffSNI(handshake)
 	switch {
 	case err == nil && name != "":
-		blocked, rules := f.checkHost(name)
-		f.decide(key, blocked, name, rules)
+		filterRes := f.checkHost(name)
+		blocked := filterRes.IsFiltered
+		f.decide(key, blocked)
+		f.logConnection(p, name, filterRes)
 		if blocked {
 			res.verdict = verdictReset
 			res.toClient, res.toServer = resetSegments(p)
-			res.host, res.rules = name, rules
 		}
 	case err == nil:
-		f.decide(key, false, "", nil)
+		f.decide(key, false)
 	case errors.Is(err, errNeedMore):
 		// Wait for the next packet of the connection.
 	default:
 		// The connection doesn't carry a TLS ClientHello, so there is no
 		// server name to check.
-		f.decide(key, false, "", nil)
+		f.decide(key, false)
 	}
 
 	return res
 }
 
-// decide stores the verdict for the connection identified by key.  name and
-// rules are only used for logging.
-func (f *Filter) decide(key flowKey, blocked bool, name string, rules []string) {
+// decide stores the verdict for the connection identified by key.
+func (f *Filter) decide(key flowKey, blocked bool) {
 	f.mu.Lock()
 	fl := f.flows[key]
 	if fl != nil {
@@ -416,15 +437,47 @@ func (f *Filter) decide(key flowKey, blocked bool, name string, rules []string) 
 		fl.handshake = nil
 	}
 	f.mu.Unlock()
+}
 
-	f.logger.Debug(
-		"inspected tls connection",
-		"host", name,
-		"blocked", blocked,
-		"client", key.src.String(),
-		"server", key.dst.String(),
-		"rules", rules,
-	)
+// logConnection records the inspected connection in the query log, so that the
+// server names, both the blocked and the allowed ones, can be analyzed in the
+// admin UI.  res is the result of checking host against the filtering rules,
+// and it must not be nil.
+func (f *Filter) logConnection(p *packet, host string, res *filtering.Result) {
+	if f.queryLog == nil {
+		return
+	}
+
+	// The modules of AdGuard Home have their own lists of the hosts that
+	// shouldn't be written to the query log, so respect them as well.
+	if !f.queryLog.ShouldLog(host, dns.TypeA, dns.ClassINET, nil) {
+		return
+	}
+
+	// A TLS connection isn't a DNS request, so the question is composed to
+	// make the server name visible in the query log.  The blocked connections
+	// and the allowed ones get the reasons of the SNI filtering, which tells
+	// them apart from the DNS requests, including the allowed ones.  The rules
+	// found by the filtering engine are kept, so an allowlist hit is still
+	// visible in the details of the entry.
+	logRes := &filtering.Result{
+		Rules:      res.Rules,
+		Reason:     filtering.NotFilteredSNI,
+		IsFiltered: res.IsFiltered,
+	}
+	if res.IsFiltered {
+		logRes.Reason = filtering.FilteredSNI
+	}
+
+	req := &dns.Msg{}
+	req.SetQuestion(dns.Fqdn(host), dns.TypeA)
+	req.RecursionDesired = true
+
+	f.queryLog.Add(&querylog.AddParams{
+		Question: req,
+		Result:   logRes,
+		ClientIP: p.src.Addr().AsSlice(),
+	})
 }
 
 // evictLocked removes the outdated connections.  f.mu must be locked.
@@ -463,28 +516,20 @@ func (f *Filter) expireLocked(now time.Time) {
 	}
 }
 
-// checkHost returns the verdict for the host name according to the filtering
-// rules.
-func (f *Filter) checkHost(host string) (blocked bool, rules []string) {
+// checkHost returns the result of checking the host name against the filtering
+// rules.  It never returns nil.
+func (f *Filter) checkHost(host string) (res *filtering.Result) {
 	setts := f.filter.Settings()
 	setts.ProtectionEnabled = true
 
-	res, err := f.filter.CheckHostRules(host, dns.TypeA, setts)
+	resVal, err := f.filter.CheckHostRules(host, dns.TypeA, setts)
 	if err != nil {
 		f.logger.Error("checking host rules", "host", host, slogutil.KeyError, err)
 
-		return false, nil
+		return &filtering.Result{}
 	}
 
-	if !res.IsFiltered {
-		return false, nil
-	}
-
-	for _, r := range res.Rules {
-		rules = append(rules, r.Text)
-	}
-
-	return true, rules
+	return &resVal
 }
 
 // resetSegments returns the reset segments that must be sent to the endpoints
